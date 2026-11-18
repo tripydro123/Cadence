@@ -1,4 +1,4 @@
-/* Cadence v3.2 — Clean Apple Music White & Dark Adaptive UI (No Dark Shades) */
+/* Cadence v3.2 — Clean Apple Music White & Dark Adaptive UI */
 :root {
   --cadence-accent: #fa2d48;
   --cadence-accent-soft: rgba(250, 45, 72, 0.12);
@@ -8,10 +8,10 @@
   --cadence-card: #f5f5f7;
   --cadence-surface-hover: rgba(0, 0, 0, 0.05);
   --cadence-surface-press: rgba(0, 0, 0, 0.09);
-  --cadence-tinted: rgba(0, 0, 0, 0.045);
+  --cadence-tinted: rgba(0, 0, 0, 0.05);
   --cadence-border: rgba(0, 0, 0, 0.08);
   --cadence-text: #1d1d1f;
-  --cadence-subtext: rgba(29, 29, 31, 0.62);
+  --cadence-subtext: rgba(29, 29, 31, 0.65);
   --cadence-radius: 12px;
   --cadence-lyric-scale: 1.18;
 }
@@ -28,6 +28,7 @@ body,
 .Root__nav-bar,
 .Root__right-sidebar,
 .Root__now-playing-bar,
+.Root__globalNav,
 .GenericModal,
 [role="dialog"] {
   --background-base: var(--cadence-surface) !important;
@@ -63,11 +64,10 @@ body,
   color: var(--cadence-text) !important;
 }
 
-/* FIX 1: Remove Black/Grey Shades from Top Bar, Filter Chips & Home Header */
+/* FIX 1: Strip All Top Header, Sticky Filter Bar & Gradient Overlays */
 .main-topBar-container,
 .main-topBar-background,
 .main-topBar-overlay,
-.Root__globalNav,
 .main-home-homeHeader,
 .main-home-filterChipsSection,
 .main-home-filterChipsContainer,
@@ -75,29 +75,37 @@ body,
 .main-entityHeader-backgroundColor,
 .main-entityHeader-overlay,
 .main-actionBarBackground-background,
-[data-testid="home-page"] > div > div:first-child {
+[data-testid="home-page"] > div > div:first-child,
+.Root__main-view [style*="linear-gradient"],
+.Root__main-view [style*="home-header-color"] {
   background: transparent !important;
   background-color: transparent !important;
   background-image: none !important;
   box-shadow: none !important;
 }
 
+/* Frosted Top Navigation Bar */
 .Root__globalNav,
 .main-topBar-container {
-  background: color-mix(in srgb, var(--cadence-surface) 86%, transparent) !important;
+  background: color-mix(in srgb, var(--cadence-surface) 88%, transparent) !important;
   backdrop-filter: blur(28px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
   border-bottom: 1px solid var(--cadence-border) !important;
 }
 
-/* Fix Windows Titlebar Controls (-, [], X) in Light Mode */
-body.cadence-light-mode .Root__globalNav button[aria-label="Minimize"],
-body.cadence-light-mode .Root__globalNav button[aria-label="Maximize"],
-body.cadence-light-mode .Root__globalNav button[aria-label="Restore"],
-body.cadence-light-mode .Root__globalNav button[aria-label="Close"],
-body.cadence-light-mode .main-topBar-windowControls button {
-  color: #1d1d1f !important;
+/* FIX 2: Remove Black Box Behind Top-Right Windows Controls (-, [], X) & Fix Top-Left Menu Icon */
+.Root__globalNav > div,
+.Root__globalNav > div:last-child,
+[class*="windowControls"],
+[data-testid="window-controls"] {
   background: transparent !important;
+  background-color: transparent !important;
+}
+
+.Root__globalNav button svg,
+.main-topBar-container button svg {
+  color: var(--cadence-text) !important;
+  fill: currentColor !important;
 }
 
 /* Clean Filter Chips ("All", "Music", "Podcasts", "Audiobooks") */
@@ -117,11 +125,13 @@ div[role="list"] button[aria-pressed="true"] {
   border-color: var(--cadence-accent) !important;
 }
 
-/* FIX 2: Remove Dark Fade Shades on Left & Right Sides of Carousels & Sidebars */
+/* FIX 3: Remove Dark Fade Gradient Masks on Right/Left Edges of Carousels & Sidebars */
 .main-shelf-shelf::before,
 .main-shelf-shelf::after,
 [data-testid="carousel-container"]::before,
 [data-testid="carousel-container"]::after,
+[data-testid="carousel-container"] > div[style*="gradient"],
+section > div > div[style*="gradient"],
 .main-yourLibraryX-header::after,
 .main-yourLibraryX-libraryRootlist::before,
 .main-yourLibraryX-libraryRootlist::after,
@@ -167,7 +177,6 @@ aside[aria-label="Now playing view"] {
   color: var(--cadence-text) !important;
 }
 
-/* Keep Right-Sidebar Lyrics Preview Readable in White Mode */
 body.cadence-light-mode .main-nowPlayingView-lyricsContent,
 body.cadence-light-mode .main-nowPlayingView-lyricsContent p,
 body.cadence-light-mode .main-nowPlayingView-lyricsContent div {
@@ -223,7 +232,7 @@ h1, h2, h3, h4,
 }
 
 body.cadence-light-mode .cadence-backdrop-orb {
-  opacity: 0.09;
+  opacity: 0.08;
 }
 
 .cadence-backdrop-orb.orb-a { top: -18%; left: -8%; }
@@ -251,13 +260,23 @@ body.cadence-floating-player .Root__now-playing-bar {
   transform: translateX(-50%) !important;
   width: min(94vw, 1180px) !important;
   border-radius: 20px !important;
-  background: color-mix(in srgb, var(--cadence-elevated) 86%, transparent) !important;
+  background: color-mix(in srgb, var(--cadence-elevated) 88%, transparent) !important;
   backdrop-filter: blur(32px) saturate(190%) !important;
   -webkit-backdrop-filter: blur(32px) saturate(190%) !important;
   border: 1px solid var(--cadence-border) !important;
   box-shadow: 0 14px 38px rgba(0, 0, 0, 0.14) !important;
   padding: 6px 16px !important;
   z-index: 90 !important;
+}
+
+/* FIX 4: Make Player Bar Icons (Lyrics, Queue, Devices, Volume, Fullscreen) Crisp on White */
+.Root__now-playing-bar button:not(.main-playPauseButton-button) svg {
+  color: var(--cadence-subtext) !important;
+  fill: currentColor !important;
+}
+
+.Root__now-playing-bar button:not(.main-playPauseButton-button):hover svg {
+  color: var(--cadence-text) !important;
 }
 
 body.cadence-floating-player .main-view-container__scroll-node-child {
