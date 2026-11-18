@@ -1,0 +1,150 @@
+/* Cadence v3.5 — Artist Overview Split Layout (460px Hero, Latest Release + Top Songs) */
+
+/* 460px Full-Bleed Artist Hero Banner with Subtle Lower Vignette */
+body.cadence-artist-split .main-entityHeader-container.main-entityHeader-withBackgroundImage {
+  height: 460px !important;
+  min-height: 460px !important;
+  max-height: 460px !important;
+  padding: 24px 28px !important;
+  align-items: flex-end !important;
+  position: relative !important;
+}
+
+body.cadence-artist-split .main-entityHeader-background.main-entityHeader-gradient::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0) 52%,
+    rgba(18, 18, 20, 0.72) 100%
+  ) !important;
+  pointer-events: none;
+}
+
+/* 32px Extra-Bold Artist Title & Verified Badge Cleanup */
+body.cadence-artist-split .main-entityHeader-withBackgroundImage .main-entityHeader-title h1 {
+  font-size: 32px !important;
+  line-height: 1.12 !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.025em !important;
+  color: #ffffff !important;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.45) !important;
+}
+
+body.cadence-artist-split .main-entityHeader-metaData {
+  display: none !important;
+}
+
+/* Two-Column Split Below Hero: Latest Release (Left) & Top Songs (Right) */
+body.cadence-artist-split .artist-artistOverview-overview {
+  display: grid !important;
+  grid-template-columns: 240px minmax(0, 1fr) !important;
+  gap: 28px !important;
+  padding: 22px 28px 12px !important;
+  align-items: start !important;
+}
+
+/* Place Action Bar Controls Over Lower Edge of Hero Banner */
+body.cadence-artist-split .artist-artistOverview-overview > .main-actionBar-ActionBar {
+  grid-column: 1 / -1 !important;
+  margin-top: -76px !important;
+  margin-bottom: 18px !important;
+  padding: 0 !important;
+  z-index: 12 !important;
+}
+
+/* Latest Release Card (Left Column: 176px x 176px Cover with 12px Radius) */
+body.cadence-artist-split .artist-artistOverview-artistPick {
+  grid-column: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+}
+
+body.cadence-artist-split .artist-artistOverview-artistPick img {
+  width: 176px !important;
+  height: 176px !important;
+  border-radius: 12px !important;
+  object-fit: cover !important;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* Top Songs List (Right Column: 48px Row Height, 40px x 40px 6px-Radius Thumbnails) */
+body.cadence-artist-split .artist-artistOverview-topTracks {
+  grid-column: 2 !important;
+}
+
+body.cadence-artist-split .artist-artistOverview-topTracks h2 {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  margin-bottom: 10px !important;
+}
+
+body.cadence-artist-split .artist-artistOverview-topTracks .main-trackList-trackListRow {
+  height: 48px !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07) !important;
+  padding: 0 6px !important;
+}
+
+body.cadence-artist-split .artist-artistOverview-topTracks .main-trackList-trackListRow:hover {
+  background-color: var(--cadence-surface-hover) !important;
+  border-radius: 8px !important;
+}
+
+body.cadence-artist-split .artist-artistOverview-topTracks .main-trackList-rowImage {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 6px !important;
+}
+
+body.cadence-artist-split .artist-artistOverview-topTracks .main-trackList-rowTitle {
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+}
+
+/* Discography Section & Segmented Pill Switcher ("Albums" | "Singles and EPs") */
+body.cadence-artist-split .artist-artistDiscography-headerContainer {
+  grid-column: 1 / -1 !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 10px !important;
+  margin-top: 8px !important;
+}
+
+body.cadence-artist-split .artist-artistDiscography-headerContainer h2 {
+  font-size: 18px !important;
+  font-weight: 800 !important;
+}
+
+body.cadence-artist-split .artist-artistDiscography-headerContainer h2::after {
+  content: " ›";
+  color: var(--cadence-subtext);
+  font-weight: 600;
+}
+
+body.cadence-artist-split .artist-artistDiscography-headerButtons {
+  display: inline-flex !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  padding: 3px !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--cadence-border) !important;
+  gap: 2px !important;
+}
+
+body.cadence-artist-split .artist-artistDiscography-headerButtons button {
+  border-radius: 6px !important;
+  padding: 5px 14px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  background: transparent !important;
+  color: var(--cadence-subtext) !important;
+}
+
+body.cadence-artist-split .artist-artistDiscography-headerButtons button[aria-checked="true"],
+body.cadence-artist-split .artist-artistDiscography-headerButtons button.main-buttons-buttonActive {
+  background: rgba(255, 255, 255, 0.14) !important;
+  color: var(--cadence-text) !important;
+}
