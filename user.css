@@ -1,0 +1,215 @@
+/* ==========================================================================
+   Cadence v3.2 — Apple Music-Inspired Theme for Spotify Desktop
+   Zero-Python Edition | Author: tripydro123
+   ========================================================================== */
+
+:root {
+  --cadence-font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --cadence-radius-lg: 14px;
+  --cadence-radius-md: 10px;
+  --cadence-radius-sm: 8px;
+  --cadence-blur: blur(28px) saturate(185%);
+  --cadence-accent: var(--spice-button, #fa2d48);
+  --cadence-surface: var(--spice-main, #121214);
+}
+
+* {
+  font-family: var(--cadence-font) !important;
+  letter-spacing: -0.01em;
+}
+
+/* Smooth macOS Vibrancy & Glass Panels */
+.Root__nav-bar,
+.main-yourLibraryX-entryPoints,
+.main-yourLibraryX-libraryContainer {
+  background-color: rgba(var(--spice-rgb-sidebar, 13, 13, 15), 0.78) !important;
+  backdrop-filter: var(--cadence-blur) !important;
+  -webkit-backdrop-filter: var(--cadence-blur) !important;
+  border-radius: var(--cadence-radius-lg) !important;
+}
+
+.Root__main-view {
+  background-color: var(--cadence-surface) !important;
+  border-radius: var(--cadence-radius-lg) !important;
+  overflow: hidden;
+}
+
+.main-topBar-background {
+  background-color: rgba(var(--spice-rgb-main, 18, 18, 20), 0.72) !important;
+  backdrop-filter: var(--cadence-blur) !important;
+  -webkit-backdrop-filter: var(--cadence-blur) !important;
+}
+
+/* Floating Apple Music-Style Now Playing Bar */
+.Root__now-playing-bar {
+  background-color: rgba(var(--spice-rgb-player, 24, 24, 27), 0.82) !important;
+  backdrop-filter: var(--cadence-blur) !important;
+  -webkit-backdrop-filter: var(--cadence-blur) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: var(--cadence-radius-lg) !important;
+  margin: 4px 8px 8px 8px !important;
+  padding: 4px 12px !important;
+}
+
+/* Rounded Album Art & Cards */
+.main-card-card,
+.main-cardImage-imageWrapper,
+.main-coverSlotCollapsed-container img,
+.main-entityHeader-image {
+  border-radius: var(--cadence-radius-md) !important;
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.22s ease !important;
+}
+
+.main-card-card:hover {
+  transform: translateY(-2px);
+  background-color: var(--spice-highlight) !important;
+}
+
+/* Accent Pill Buttons */
+.Button-sc-qlcn5g-0,
+[data-testid="play-button"] {
+  border-radius: 999px !important;
+}
+
+/* Built-In Ad & Promotional Banner Suppression */
+body.cadence-adblock-active [data-testid="billboard-ad"],
+body.cadence-adblock-active .main-leaderboardComponent-container,
+body.cadence-adblock-active .desktoproutes-homepage-takeover-ad-hptoComponent-parentContainer,
+body.cadence-adblock-active [aria-label="Upgrade to Premium"],
+body.cadence-adblock-active button[title="Upgrade to Premium"],
+body.cadence-adblock-active .main-topBar-UpgradeButton {
+  display: none !important;
+}
+
+/* Minimalist Scrollbars */
+::-webkit-scrollbar {
+  width: 6px !important;
+  height: 6px !important;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18) !important;
+  border-radius: 999px !important;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.32) !important;
+}
+
+/* Vertical Microphone Capsule HUD (Karaoke Vocal Deck) */
+#cadence-mic-hud {
+  position: fixed;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 9990;
+  width: 46px;
+  padding: 12px 6px;
+  border-radius: 999px;
+  background: rgba(24, 24, 28, 0.84);
+  backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+#cadence-mic-hud.cadence-hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-50%) translateX(16px);
+}
+
+#cadence-mic-hud input[type="range"] {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  width: 6px;
+  height: 110px;
+  accent-color: var(--cadence-accent);
+  cursor: pointer;
+}
+
+.cadence-hud-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--spice-subtext, #a1a1a6);
+  letter-spacing: 0.04em;
+}
+
+/* Cadence Studio Modal */
+.cadence-studio-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  color: var(--spice-text, #f5f5f7);
+}
+
+.cadence-tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 10px;
+}
+
+.cadence-tab-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid transparent;
+  color: var(--spice-text);
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cadence-tab-btn.active {
+  background: var(--cadence-accent);
+  color: #ffffff;
+}
+
+.cadence-panel {
+  display: none;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cadence-panel.active {
+  display: flex;
+}
+
+.cadence-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 10px 14px;
+  border-radius: var(--cadence-radius-md);
+}
+
+.cadence-eq-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 14px 10px;
+  border-radius: var(--cadence-radius-md);
+}
+
+.cadence-eq-band {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.cadence-eq-band input[type="range"] {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  height: 90px;
+  accent-color: var(--cadence-accent);
+}

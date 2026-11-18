@@ -1,0 +1,10 @@
+[
+  {
+    "name": "Cadence v3.2",
+    "description": "Apple Music-inspired Spicetify theme with live color wheels, 5-band Web Audio EQ, spatial widening, and karaoke vocal HUD.",
+    "main": "user.css",
+    "readme": "README.md",
+    "schemes": "color.ini",
+    "include": ["cadence.js"]
+  }
+]
