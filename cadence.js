@@ -104,18 +104,25 @@
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
 
-  // Strip Spotify's inline dark gradient overlays on top headers & shelf edges
+  // Strip Spotify's hashed inline dark gradients on home header, shelf edges & window controls
   function stripInlineHeaderShades() {
-    const targets = document.querySelectorAll(
-      ".main-home-homeHeader, .main-home-filterChipsSection, .main-topBar-overlay, .main-entityHeader-backgroundColor, .under-main-view"
-    );
-    targets.forEach((el) => {
-      if (el.style.backgroundColor && el.style.backgroundColor !== "transparent") {
-        el.style.backgroundColor = "transparent";
-      }
-      if (el.style.backgroundImage && el.style.backgroundImage !== "none") {
-        el.style.backgroundImage = "none";
-      }
+    const containers = document.querySelectorAll(".Root__main-view, .Root__globalNav");
+    containers.forEach((rootEl) => {
+      rootEl.querySelectorAll("[style]").forEach((el) => {
+        if (el.closest(".cadence-studio-wrap") || el.classList.contains("cadence-backdrop-orb")) return;
+        const inlineStyle = el.getAttribute("style") || "";
+        if (
+          inlineStyle.includes("gradient") ||
+          inlineStyle.includes("--home-header-color") ||
+          inlineStyle.includes("background-color")
+        ) {
+          if (!inlineStyle.includes("url(") && el.tagName !== "IMG") {
+            el.style.setProperty("background", "transparent", "important");
+            el.style.setProperty("background-color", "transparent", "important");
+            el.style.setProperty("background-image", "none", "important");
+          }
+        }
+      });
     });
   }
 
@@ -200,9 +207,9 @@
     const cardBg = isLight ? shiftHex(state.surfaceHex, -6) : shiftHex(state.surfaceHex, 10);
     const hoverBg = isLight ? "rgba(0, 0, 0, 0.05)" : "rgba(255, 255, 255, 0.08)";
     const pressBg = isLight ? "rgba(0, 0, 0, 0.09)" : "rgba(255, 255, 255, 0.13)";
-    const tintedBg = isLight ? "rgba(0, 0, 0, 0.045)" : "rgba(255, 255, 255, 0.06)";
+    const tintedBg = isLight ? "rgba(0, 0, 0, 0.05)" : "rgba(255, 255, 255, 0.06)";
     const borderCol = isLight ? "rgba(0, 0, 0, 0.08)" : "rgba(255, 255, 255, 0.1)";
-    const subtextCol = hexToRgba(state.textHex, 0.62);
+    const subtextCol = hexToRgba(state.textHex, 0.65);
 
     root.style.setProperty("--cadence-accent", state.accentHex);
     root.style.setProperty("--cadence-accent-soft", hexToRgba(state.accentHex, isLight ? 0.12 : 0.2));
@@ -616,7 +623,6 @@
     });
   }
 
-  // Watch DOM mutations so Spotify's dynamic hover headers never re-apply dark shades
   const shadeObserver = new MutationObserver(() => {
     stripInlineHeaderShades();
   });
