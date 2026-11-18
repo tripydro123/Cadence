@@ -1,4 +1,4 @@
-// Cadence v3.2 — Apple Music Inspired Visual & Lyrics Studio
+// Cadence v3.2 — Apple Music UI, White/Dark Adaptive Theme & 3-Wheel Color Studio
 // Author: tripydro123
 
 (function CadenceStudio() {
@@ -7,21 +7,23 @@
     return;
   }
 
-  const STORAGE_KEY = "cadence_v32_apple_studio";
+  const STORAGE_KEY = "cadence_v32_apple_music_ui";
   const INSTALL_WIN = "iwr -useb https://raw.githubusercontent.com/tripydro123/cadence/main/install.ps1 | iex";
   const INSTALL_UNIX = "curl -fsSL https://raw.githubusercontent.com/tripydro123/cadence/main/install.sh | sh";
 
   const PRESETS = [
-    { name: "Apple White", accent: "#fa2d48", surface: "#ffffff" },
-    { name: "Soft Ceramic", accent: "#007aff", surface: "#f5f5f7" },
-    { name: "Apple Crimson", accent: "#fa2d48", surface: "#121214" },
-    { name: "OLED Midnight", accent: "#ff375f", surface: "#000000" }
+    { name: "Apple Music White", accent: "#fa2d48", surface: "#ffffff", text: "#1d1d1f", isWhiteBtn: true },
+    { name: "Apple Music Dark", accent: "#fa2d48", surface: "#1c1c1e", text: "#ffffff", isWhiteBtn: false },
+    { name: "iOS Warm White", accent: "#ff2d55", surface: "#f9f9fb", text: "#1d1d1f", isWhiteBtn: true },
+    { name: "OLED Pure Black", accent: "#ff375f", surface: "#000000", text: "#ffffff", isWhiteBtn: false }
   ];
 
   const defaultState = {
     accentHex: "#fa2d48",
-    surfaceHex: "#121214",
-    borderRadius: 14,
+    surfaceHex: "#ffffff",
+    textHex: "#1d1d1f",
+    autoTextContrast: true,
+    borderRadius: 12,
     ambientBackdrop: true,
     floatingPlayer: true,
     squircleHighlight: true,
@@ -39,7 +41,7 @@
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }
 
-  // Color conversion helpers for circular HSV color wheels
+  // Color helpers for circular HSV wheels
   function hexToHsv(hex) {
     const clean = hex.replace("#", "");
     const r = parseInt(clean.substring(0, 2), 16) / 255;
@@ -95,6 +97,14 @@
     return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
   }
 
+  function hexToRgba(hex, alpha) {
+    const clean = hex.replace("#", "");
+    const r = parseInt(clean.substring(0, 2), 16);
+    const g = parseInt(clean.substring(2, 4), 16);
+    const b = parseInt(clean.substring(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+
   async function copyToClipboard(text, btnEl, defaultLabel) {
     let copied = false;
     try {
@@ -131,7 +141,6 @@
     }
   }
 
-  // Feature #1: Dynamic Album-Art Mesh Backdrop
   function ensureBackdropLayer() {
     let layer = document.getElementById("cadence-art-backdrop");
     if (!layer) {
@@ -140,7 +149,6 @@
       layer.innerHTML = `
         <div class="cadence-backdrop-orb orb-a"></div>
         <div class="cadence-backdrop-orb orb-b"></div>
-        <div class="cadence-backdrop-veil"></div>
       `;
       document.body.prepend(layer);
     }
@@ -169,29 +177,47 @@
     const root = document.documentElement;
     const isLight = getLuminance(state.surfaceHex) > 0.58;
 
-    const sidebarBg = isLight ? shiftHex(state.surfaceHex, -10) : shiftHex(state.surfaceHex, -6);
-    const cardBg = isLight ? shiftHex(state.surfaceHex, -8) : shiftHex(state.surfaceHex, 10);
-    const rowHover = isLight ? "rgba(0, 0, 0, 0.06)" : "rgba(255, 255, 255, 0.08)";
-    const textPrimary = isLight ? "#1d1d1f" : "#ffffff";
-    const textSecondary = isLight ? "#6e6e73" : "#a1a1a6";
+    if (state.autoTextContrast) {
+      state.textHex = isLight ? "#1d1d1f" : "#ffffff";
+    }
+
+    // Authentic Apple Music Light (#f5f5f7 sidebar / #ffffff canvas) & Dark (#1c1c1e / #141416) surfaces
+    const sidebarBg = isLight ? shiftHex(state.surfaceHex, -10) : shiftHex(state.surfaceHex, 6);
+    const elevatedBg = isLight ? "#ffffff" : shiftHex(state.surfaceHex, 14);
+    const cardBg = isLight ? shiftHex(state.surfaceHex, -6) : shiftHex(state.surfaceHex, 10);
+    const hoverBg = isLight ? "rgba(0, 0, 0, 0.05)" : "rgba(255, 255, 255, 0.08)";
+    const pressBg = isLight ? "rgba(0, 0, 0, 0.09)" : "rgba(255, 255, 255, 0.13)";
+    const tintedBg = isLight ? "rgba(0, 0, 0, 0.04)" : "rgba(255, 255, 255, 0.06)";
+    const borderCol = isLight ? "rgba(0, 0, 0, 0.09)" : "rgba(255, 255, 255, 0.1)";
+    const subtextCol = hexToRgba(state.textHex, 0.62);
 
     root.style.setProperty("--cadence-accent", state.accentHex);
+    root.style.setProperty("--cadence-accent-soft", hexToRgba(state.accentHex, isLight ? 0.12 : 0.2));
+    root.style.setProperty("--cadence-surface", state.surfaceHex);
+    root.style.setProperty("--cadence-sidebar", sidebarBg);
+    root.style.setProperty("--cadence-elevated", elevatedBg);
+    root.style.setProperty("--cadence-card", cardBg);
+    root.style.setProperty("--cadence-surface-hover", hoverBg);
+    root.style.setProperty("--cadence-surface-press", pressBg);
+    root.style.setProperty("--cadence-tinted", tintedBg);
+    root.style.setProperty("--cadence-border", borderCol);
+    root.style.setProperty("--cadence-text", state.textHex);
+    root.style.setProperty("--cadence-subtext", subtextCol);
+    root.style.setProperty("--cadence-radius", `${state.borderRadius}px`);
+    root.style.setProperty("--cadence-lyric-scale", `${state.lyricScale}`);
+
+    // Spicetify Core Variables
     root.style.setProperty("--spice-button", state.accentHex);
     root.style.setProperty("--spice-button-active", state.accentHex);
     root.style.setProperty("--spice-notification", state.accentHex);
-
-    root.style.setProperty("--cadence-surface", state.surfaceHex);
     root.style.setProperty("--spice-main", state.surfaceHex);
     root.style.setProperty("--spice-sidebar", sidebarBg);
-    root.style.setProperty("--spice-player", state.surfaceHex);
+    root.style.setProperty("--spice-player", elevatedBg);
     root.style.setProperty("--spice-card", cardBg);
-    root.style.setProperty("--spice-selected-row", rowHover);
-    root.style.setProperty("--spice-misc", rowHover);
-    root.style.setProperty("--spice-text", textPrimary);
-    root.style.setProperty("--spice-subtext", textSecondary);
-
-    root.style.setProperty("--cadence-radius", `${state.borderRadius}px`);
-    root.style.setProperty("--cadence-lyric-scale", `${state.lyricScale}`);
+    root.style.setProperty("--spice-selected-row", hoverBg);
+    root.style.setProperty("--spice-misc", tintedBg);
+    root.style.setProperty("--spice-text", state.textHex);
+    root.style.setProperty("--spice-subtext", subtextCol);
 
     document.body.classList.toggle("cadence-light-mode", isLight);
     document.body.classList.toggle("cadence-adblock-active", !!state.adBlock);
@@ -205,19 +231,19 @@
     updateBackdropArt();
   }
 
-  // Circular Color Wheel Builder
+  // Circular Color Wheel Component
   function mountCircularWheel(containerEl, initialHex, onChange) {
     let hsv = hexToHsv(initialHex);
-    const size = 136;
+    const size = 116;
     const radius = size / 2;
 
     containerEl.innerHTML = `
-      <div class="cadence-wheel-box">
-        <canvas width="${size}" height="${size}" class="cadence-wheel-canvas"></canvas>
+      <div class="cadence-wheel-box" style="width:${size}px;height:${size}px;">
+        <canvas width="${size}" height="${size}" class="cadence-wheel-canvas" style="width:${size}px;height:${size}px;"></canvas>
         <div class="cadence-wheel-cursor"></div>
       </div>
       <div class="cadence-brightness-row">
-        <span>Brightness</span>
+        <span>Shade</span>
         <input type="range" class="cadence-val-slider" min="0" max="1" step="0.01" value="${hsv.v}" />
       </div>
       <div class="cadence-hex-badge">${initialHex.toUpperCase()}</div>
@@ -329,8 +355,8 @@
 
     container.innerHTML = `
       <div class="cadence-tabs">
-        <button class="cadence-tab-btn active" data-tab="appearance">Color Wheels & Themes</button>
-        <button class="cadence-tab-btn" data-tab="layout">Apple Glass & Layout</button>
+        <button class="cadence-tab-btn active" data-tab="appearance">Themes & Color Wheels</button>
+        <button class="cadence-tab-btn" data-tab="layout">Apple Music UI</button>
         <button class="cadence-tab-btn" data-tab="lyrics">Karaoke Lyrics</button>
         <button class="cadence-tab-btn" data-tab="share">Share Theme</button>
       </div>
@@ -339,41 +365,45 @@
         <div class="cadence-preset-grid">
           ${PRESETS.map(
             (p, idx) => `
-            <button class="cadence-preset-btn" data-preset="${idx}">
-              <span class="cadence-swatch" style="background:${p.accent};box-shadow:0 0 0 2px${p.surface};"></span>
+            <button class="cadence-preset-btn ${p.isWhiteBtn ? "cadence-white-theme-btn" : ""}" data-preset="${idx}">
+              <span class="cadence-swatch" style="background:${p.surface};border:2px solid ${p.accent};"></span>
               <span>${p.name}</span>
             </button>`
           ).join("")}
         </div>
 
-        <div class="cadence-wheels-grid">
+        <div class="cadence-wheels-grid-3">
           <div class="cadence-wheel-card">
-            <div class="cadence-wheel-title">Accent Color Wheel</div>
+            <div class="cadence-wheel-title">Accent Wheel</div>
             <div id="cadence-accent-wheel"></div>
           </div>
           <div class="cadence-wheel-card">
-            <div class="cadence-wheel-title">Background Color Wheel</div>
+            <div class="cadence-wheel-title">Background Wheel</div>
             <div id="cadence-bg-wheel"></div>
+          </div>
+          <div class="cadence-wheel-card">
+            <div class="cadence-wheel-title">Text Color Wheel</div>
+            <div id="cadence-text-wheel"></div>
           </div>
         </div>
 
         <div class="cadence-row">
-          <span>Suppress Promo & Upgrade Banners</span>
-          <input type="checkbox" id="cadence-adblock-toggle" ${state.adBlock ? "checked" : ""} />
+          <span>Auto-Contrast Text (Prevents Invisible Text on White BG)</span>
+          <input type="checkbox" id="cadence-autotext-toggle" ${state.autoTextContrast ? "checked" : ""} />
         </div>
       </div>
 
       <div class="cadence-panel" data-panel="layout">
         <div class="cadence-row">
-          <span>Dynamic Album-Art Mesh Backdrop</span>
-          <input type="checkbox" id="cadence-backdrop-toggle" ${state.ambientBackdrop ? "checked" : ""} />
-        </div>
-        <div class="cadence-row">
-          <span>Floating Frosted-Glass Playback Pill</span>
+          <span>Apple Music Frosted-Glass Floating Player Pill</span>
           <input type="checkbox" id="cadence-floating-toggle" ${state.floatingPlayer ? "checked" : ""} />
         </div>
         <div class="cadence-row">
-          <span>Tactile Squircle Cards & Glass Edge Rim</span>
+          <span>Dynamic Album-Art Ambient Mesh Backdrop</span>
+          <input type="checkbox" id="cadence-backdrop-toggle" ${state.ambientBackdrop ? "checked" : ""} />
+        </div>
+        <div class="cadence-row">
+          <span>Apple Music Squircle Cards & Glass Edge Highlight</span>
           <input type="checkbox" id="cadence-squircle-toggle" ${state.squircleHighlight ? "checked" : ""} />
         </div>
         <div class="cadence-row">
@@ -382,11 +412,11 @@
         </div>
         <div class="cadence-row">
           <span>Card Corner Radius (<span id="cadence-radius-val">${state.borderRadius}</span>px)</span>
-          <input type="range" id="cadence-radius-slider" min="6" max="24" step="2" value="${state.borderRadius}" />
+          <input type="range" id="cadence-radius-slider" min="6" max="22" step="2" value="${state.borderRadius}" />
         </div>
         <div class="cadence-row">
-          <span>Minimal Apple-Style Scrollbars</span>
-          <input type="checkbox" id="cadence-compact-toggle" ${state.compactSidebar ? "checked" : ""} />
+          <span>Suppress Upgrade & Promo Banners</span>
+          <input type="checkbox" id="cadence-adblock-toggle" ${state.adBlock ? "checked" : ""} />
         </div>
       </div>
 
@@ -424,7 +454,7 @@
       </div>
     `;
 
-    // Mount Circular Color Wheels
+    // Mount 3 Circular Color Wheels
     const accentWheelCtrl = mountCircularWheel(
       container.querySelector("#cadence-accent-wheel"),
       state.accentHex,
@@ -441,6 +471,21 @@
       (newHex) => {
         state.surfaceHex = newHex;
         applyVisualPrefs();
+        if (state.autoTextContrast) {
+          textWheelCtrl.setHex(state.textHex);
+        }
+        saveState();
+      }
+    );
+
+    const textWheelCtrl = mountCircularWheel(
+      container.querySelector("#cadence-text-wheel"),
+      state.textHex,
+      (newHex) => {
+        state.autoTextContrast = false;
+        container.querySelector("#cadence-autotext-toggle").checked = false;
+        state.textHex = newHex;
+        applyVisualPrefs();
         saveState();
       }
     );
@@ -455,18 +500,29 @@
       });
     });
 
-    // Presets (including Apple White)
+    // Presets (including Apple Music White button)
     container.querySelectorAll(".cadence-preset-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         const preset = PRESETS[Number(btn.dataset.preset)];
         if (!preset) return;
         state.accentHex = preset.accent;
         state.surfaceHex = preset.surface;
+        state.textHex = preset.text;
+        state.autoTextContrast = true;
+        container.querySelector("#cadence-autotext-toggle").checked = true;
         accentWheelCtrl.setHex(preset.accent);
         bgWheelCtrl.setHex(preset.surface);
+        textWheelCtrl.setHex(preset.text);
         applyVisualPrefs();
         saveState();
       });
+    });
+
+    container.querySelector("#cadence-autotext-toggle").addEventListener("change", (e) => {
+      state.autoTextContrast = e.target.checked;
+      applyVisualPrefs();
+      textWheelCtrl.setHex(state.textHex);
+      saveState();
     });
 
     container.querySelector("#cadence-adblock-toggle").addEventListener("change", (e) => {
@@ -475,15 +531,14 @@
       saveState();
     });
 
-    // Apple Glass & Layout toggles
-    container.querySelector("#cadence-backdrop-toggle").addEventListener("change", (e) => {
-      state.ambientBackdrop = e.target.checked;
+    container.querySelector("#cadence-floating-toggle").addEventListener("change", (e) => {
+      state.floatingPlayer = e.target.checked;
       applyVisualPrefs();
       saveState();
     });
 
-    container.querySelector("#cadence-floating-toggle").addEventListener("change", (e) => {
-      state.floatingPlayer = e.target.checked;
+    container.querySelector("#cadence-backdrop-toggle").addEventListener("change", (e) => {
+      state.ambientBackdrop = e.target.checked;
       applyVisualPrefs();
       saveState();
     });
@@ -507,13 +562,6 @@
       saveState();
     });
 
-    container.querySelector("#cadence-compact-toggle").addEventListener("change", (e) => {
-      state.compactSidebar = e.target.checked;
-      applyVisualPrefs();
-      saveState();
-    });
-
-    // Karaoke Lyrics controls (Zoom + Glow + Theater Dimming, no blur)
     container.querySelector("#cadence-scale-slider").addEventListener("input", (e) => {
       state.lyricScale = Number(e.target.value);
       container.querySelector("#cadence-scale-val").textContent = state.lyricScale.toFixed(2);
@@ -533,7 +581,6 @@
       saveState();
     });
 
-    // Copy buttons
     const copyWinBtn = container.querySelector("#cadence-copy-win");
     copyWinBtn.addEventListener("click", () => copyToClipboard(INSTALL_WIN, copyWinBtn, "Copy"));
 
@@ -541,13 +588,12 @@
     copyUnixBtn.addEventListener("click", () => copyToClipboard(INSTALL_UNIX, copyUnixBtn, "Copy"));
 
     Spicetify.PopupModal.display({
-      title: "Cadence v3.2 Studio",
+      title: "Cadence v3.2 — Apple Music Studio",
       content: container,
       isLarge: true
     });
   }
 
-  // Hotkey: Alt + C toggles Cadence Studio
   window.addEventListener("keydown", (e) => {
     if (e.altKey && e.code === "KeyC") {
       e.preventDefault();
@@ -568,5 +614,5 @@
   );
 
   applyVisualPrefs();
-  console.log("[Cadence v3.2] Apple Music Studio loaded (Alt+C).");
+  console.log("[Cadence v3.2] Apple Music UI & 3-Wheel Studio loaded.");
 })();
