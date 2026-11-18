@@ -1,4 +1,4 @@
-/* Cadence v3.2 — Authentic Apple Music White & Dark Adaptive UI */
+/* Cadence v3.2 — Clean Apple Music White & Dark Adaptive UI (No Dark Shades) */
 :root {
   --cadence-accent: #fa2d48;
   --cadence-accent-soft: rgba(250, 45, 72, 0.12);
@@ -8,15 +8,15 @@
   --cadence-card: #f5f5f7;
   --cadence-surface-hover: rgba(0, 0, 0, 0.05);
   --cadence-surface-press: rgba(0, 0, 0, 0.09);
-  --cadence-tinted: rgba(0, 0, 0, 0.04);
-  --cadence-border: rgba(0, 0, 0, 0.09);
+  --cadence-tinted: rgba(0, 0, 0, 0.045);
+  --cadence-border: rgba(0, 0, 0, 0.08);
   --cadence-text: #1d1d1f;
   --cadence-subtext: rgba(29, 29, 31, 0.62);
   --cadence-radius: 12px;
   --cadence-lyric-scale: 1.18;
 }
 
-/* Override Spotify Encore Theme Variables Globally for White & Custom Themes */
+/* Override Spotify Encore Theme Variables Globally */
 :root,
 body,
 .encore-dark-theme,
@@ -47,34 +47,109 @@ body,
   --essential-bright-accent: var(--cadence-accent) !important;
   --decorative-base: var(--cadence-text) !important;
   --decorative-subdued: var(--cadence-border) !important;
+  --home-header-color: transparent !important;
   color: var(--cadence-text) !important;
 }
 
-/* Main Canvas & Apple Music Split-Pane Surfaces */
+/* Main Canvas & Split-Pane Surfaces */
 body,
 .Root__top-container,
 .Root__main-view,
 .main-view-container,
 .main-view-container__scroll-node,
-.os-content {
+.os-content,
+[data-testid="home-page"] {
   background-color: var(--cadence-surface) !important;
   color: var(--cadence-text) !important;
 }
 
-/* Apple Music Left Sidebar (#f5f5f7 in White Mode) */
+/* FIX 1: Remove Black/Grey Shades from Top Bar, Filter Chips & Home Header */
+.main-topBar-container,
+.main-topBar-background,
+.main-topBar-overlay,
+.Root__globalNav,
+.main-home-homeHeader,
+.main-home-filterChipsSection,
+.main-home-filterChipsContainer,
+.under-main-view,
+.main-entityHeader-backgroundColor,
+.main-entityHeader-overlay,
+.main-actionBarBackground-background,
+[data-testid="home-page"] > div > div:first-child {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.Root__globalNav,
+.main-topBar-container {
+  background: color-mix(in srgb, var(--cadence-surface) 86%, transparent) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  border-bottom: 1px solid var(--cadence-border) !important;
+}
+
+/* Fix Windows Titlebar Controls (-, [], X) in Light Mode */
+body.cadence-light-mode .Root__globalNav button[aria-label="Minimize"],
+body.cadence-light-mode .Root__globalNav button[aria-label="Maximize"],
+body.cadence-light-mode .Root__globalNav button[aria-label="Restore"],
+body.cadence-light-mode .Root__globalNav button[aria-label="Close"],
+body.cadence-light-mode .main-topBar-windowControls button {
+  color: #1d1d1f !important;
+  background: transparent !important;
+}
+
+/* Clean Filter Chips ("All", "Music", "Podcasts", "Audiobooks") */
+.ChipInnerComponent-sm,
+button[role="checkbox"][aria-checked="false"] > span,
+div[role="list"] button[aria-pressed="false"] {
+  background-color: var(--cadence-tinted) !important;
+  color: var(--cadence-text) !important;
+  border: 1px solid var(--cadence-border) !important;
+}
+
+.ChipInnerComponent-sm-selected,
+button[role="checkbox"][aria-checked="true"] > span,
+div[role="list"] button[aria-pressed="true"] {
+  background-color: var(--cadence-accent) !important;
+  color: #ffffff !important;
+  border-color: var(--cadence-accent) !important;
+}
+
+/* FIX 2: Remove Dark Fade Shades on Left & Right Sides of Carousels & Sidebars */
+.main-shelf-shelf::before,
+.main-shelf-shelf::after,
+[data-testid="carousel-container"]::before,
+[data-testid="carousel-container"]::after,
+.main-yourLibraryX-header::after,
+.main-yourLibraryX-libraryRootlist::before,
+.main-yourLibraryX-libraryRootlist::after,
+.LayoutResizer__resize-bar,
+.LayoutResizer__inline-root {
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.LayoutResizer__resize-bar::after {
+  background-color: var(--cadence-border) !important;
+  width: 1px !important;
+}
+
+/* Apple Music Left Sidebar */
 .Root__nav-bar,
 .main-yourLibraryX-entryPoints,
 .main-yourLibraryX-libraryContainer,
 .main-yourLibraryX-libraryRootlist {
   background-color: var(--cadence-sidebar) !important;
   border-right: 1px solid var(--cadence-border) !important;
+  box-shadow: none !important;
   color: var(--cadence-text) !important;
 }
 
-/* Apple Music Active Sidebar Pill */
 .main-yourLibraryX-navLinkActive,
-.main-yourLibraryX-listItemActive,
-.ChipInnerComponent-sm-selected {
+.main-yourLibraryX-listItemActive {
   background-color: var(--cadence-accent-soft) !important;
   color: var(--cadence-accent) !important;
   border-radius: 10px !important;
@@ -88,6 +163,14 @@ body,
 aside[aria-label="Now playing view"] {
   background-color: var(--cadence-sidebar) !important;
   border-left: 1px solid var(--cadence-border) !important;
+  box-shadow: none !important;
+  color: var(--cadence-text) !important;
+}
+
+/* Keep Right-Sidebar Lyrics Preview Readable in White Mode */
+body.cadence-light-mode .main-nowPlayingView-lyricsContent,
+body.cadence-light-mode .main-nowPlayingView-lyricsContent p,
+body.cadence-light-mode .main-nowPlayingView-lyricsContent div {
   color: var(--cadence-text) !important;
 }
 
@@ -140,7 +223,7 @@ h1, h2, h3, h4,
 }
 
 body.cadence-light-mode .cadence-backdrop-orb {
-  opacity: 0.11;
+  opacity: 0.09;
 }
 
 .cadence-backdrop-orb.orb-a { top: -18%; left: -8%; }
@@ -151,16 +234,7 @@ body.cadence-light-mode .cadence-backdrop-orb {
   100% { transform: translate(4%, 5%) scale(1.1); }
 }
 
-/* Apple Music Top Bar & Search Pill */
-.main-topBar-container,
-.main-topBar-background,
-.Root__globalNav {
-  background: color-mix(in srgb, var(--cadence-surface) 82%, transparent) !important;
-  backdrop-filter: blur(28px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
-  border-bottom: 1px solid var(--cadence-border) !important;
-}
-
+/* Search Pill */
 .x-searchInput-searchInputInput,
 form[role="search"] input {
   background-color: var(--cadence-tinted) !important;
@@ -177,11 +251,11 @@ body.cadence-floating-player .Root__now-playing-bar {
   transform: translateX(-50%) !important;
   width: min(94vw, 1180px) !important;
   border-radius: 20px !important;
-  background: color-mix(in srgb, var(--cadence-elevated) 84%, transparent) !important;
+  background: color-mix(in srgb, var(--cadence-elevated) 86%, transparent) !important;
   backdrop-filter: blur(32px) saturate(190%) !important;
   -webkit-backdrop-filter: blur(32px) saturate(190%) !important;
   border: 1px solid var(--cadence-border) !important;
-  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.16) !important;
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.14) !important;
   padding: 6px 16px !important;
   z-index: 90 !important;
 }
@@ -196,13 +270,6 @@ body.cadence-floating-player .main-view-container__scroll-node-child {
 }
 
 /* Clean Editorial Playlist & Album Headers */
-body.cadence-editorial-headers .main-entityHeader-backgroundColor,
-body.cadence-editorial-headers .main-actionBarBackground-background,
-body.cadence-editorial-headers .main-home-homeHeader {
-  background: transparent !important;
-  background-image: none !important;
-}
-
 body.cadence-editorial-headers .main-entityHeader-title h1 {
   letter-spacing: -0.025em !important;
   font-weight: 800 !important;
@@ -210,7 +277,7 @@ body.cadence-editorial-headers .main-entityHeader-title h1 {
 
 body.cadence-editorial-headers .main-entityHeader-imageContainer img {
   border-radius: var(--cadence-radius) !important;
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.22) !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.2) !important;
 }
 
 /* Apple Music Squircle Cards & Track Rows */
@@ -229,7 +296,7 @@ body.cadence-squircle-cards .main-card-card {
 
 body.cadence-squircle-cards .main-card-card:hover {
   transform: translateY(-3px) scale(1.01) !important;
-  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.14) !important;
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.12) !important;
 }
 
 .main-trackList-trackListRow:hover {
