@@ -1,37 +1,53 @@
-/* Cadence v3.5 — Apple Music Iconography, 68px Left Rail & Segmented Pills */
+/* Cadence v3.5.1 — Fixed 68px Apple Rail & Horizontal Right Queue Tabs */
 
 /* 68px Compact Apple Music Left Rail */
 body.cadence-apple-rail .Root__nav-bar {
   width: 68px !important;
   min-width: 68px !important;
   max-width: 68px !important;
+  overflow-x: hidden !important;
   align-items: center !important;
-  padding: 10px 0 14px !important;
+  padding: 8px 0 12px !important;
 }
 
 body.cadence-apple-rail .main-yourLibraryX-entryPoints,
-body.cadence-apple-rail .main-yourLibraryX-libraryContainer {
+body.cadence-apple-rail .main-yourLibraryX-libraryContainer,
+body.cadence-apple-rail .main-yourLibraryX-library {
   width: 68px !important;
+  min-width: 68px !important;
+  max-width: 68px !important;
+  overflow-x: hidden !important;
   align-items: center !important;
   padding: 0 !important;
 }
 
-/* Hide Text Labels & Filter Chips in 68px Icon Rail Mode */
-body.cadence-apple-rail .main-yourLibraryX-headerContent span,
+/* Hide Text Header ("Your Library" / "+") When Collapsed into Icon Rail */
+body.cadence-apple-rail .main-yourLibraryX-header,
 body.cadence-apple-rail .main-yourLibraryX-filterArea,
 body.cadence-apple-rail .main-yourLibraryX-searchAndSort,
-body.cadence-apple-rail .main-yourLibraryX-listRowDetails,
-body.cadence-apple-rail .main-yourLibraryX-collapseButton span {
+body.cadence-apple-rail .main-yourLibraryX-listRowDetails {
   display: none !important;
 }
 
-/* 38px x 38px (8px Radius) Playlist Thumbnails in Left Rail */
+/* Center 38px x 38px (8px Radius) Playlist Covers Inside 68px Rail */
 body.cadence-apple-rail .main-yourLibraryX-listItem {
+  width: 68px !important;
+  display: flex !important;
   justify-content: center !important;
   padding: 4px 0 !important;
 }
 
-body.cadence-apple-rail .main-yourLibraryX-listRowEntityImage,
+body.cadence-apple-rail .main-yourLibraryX-listItem > div,
+body.cadence-apple-rail .main-yourLibraryX-listRowEntityImage {
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  max-width: 38px !important;
+  padding: 0 !important;
+  margin: 0 auto !important;
+  justify-content: center !important;
+}
+
 body.cadence-apple-rail .main-yourLibraryX-listItem .cover-art,
 body.cadence-apple-rail .main-yourLibraryX-listItem img {
   width: 38px !important;
@@ -45,11 +61,12 @@ body.cadence-apple-rail .main-yourLibraryX-listItem img {
 #cadence-apple-rail-logo {
   width: 38px;
   height: 38px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--cadence-accent);
-  margin: 4px auto 6px;
+  margin: 2px auto 8px;
   cursor: pointer;
   border-radius: 9px;
   transition: transform 0.18s ease, background-color 0.18s ease;
@@ -64,6 +81,7 @@ body.cadence-apple-rail .main-yourLibraryX-listItem img {
   width: 38px;
   height: 38px;
   min-height: 38px;
+  flex-shrink: 0;
   border-radius: 9px;
   background-color: #1d8f5a;
   color: #ffffff;
@@ -71,7 +89,7 @@ body.cadence-apple-rail .main-yourLibraryX-listItem img {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: auto auto 4px;
+  margin: auto auto 2px;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(29, 143, 90, 0.35);
   transition: transform 0.18s ease, filter 0.18s ease;
@@ -121,21 +139,37 @@ aside[aria-label="Now playing view"] button[aria-label*="More"] svg {
   color: var(--cadence-accent) !important;
 }
 
-/* Right Queue Sidebar (270px) & "Playing next" / "History" Segmented Pill Bar */
+/* Right Queue Sidebar (292px) — Prevents Horizontal Text Clipping */
 .Root__right-sidebar {
-  width: 270px !important;
-  min-width: 270px !important;
+  width: 292px !important;
+  min-width: 292px !important;
+  max-width: 292px !important;
+  overflow-x: hidden !important;
 }
 
+.Root__right-sidebar > div,
+.Root__right-sidebar aside {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+/* Locked 30px Horizontal "Playing next" / "History" Pill Bar */
 #cadence-queue-segmented-tabs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2px;
-  background: rgba(0, 0, 0, 0.28);
-  padding: 3px;
-  border-radius: 8px;
-  margin: 10px 12px 8px;
-  border: 1px solid var(--cadence-border);
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 2px !important;
+  width: calc(100% - 24px) !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  max-height: 30px !important;
+  flex: 0 0 30px !important;
+  background: rgba(0, 0, 0, 0.28) !important;
+  padding: 3px !important;
+  border-radius: 8px !important;
+  margin: 10px 12px 6px !important;
+  border: 1px solid var(--cadence-border) !important;
+  box-sizing: border-box !important;
 }
 
 .cadence-seg-tab {
@@ -144,9 +178,12 @@ aside[aria-label="Now playing view"] button[aria-label*="More"] svg {
   color: var(--cadence-subtext);
   font-size: 12px;
   font-weight: 600;
-  padding: 5px 8px;
+  height: 22px;
+  line-height: 22px;
+  padding: 0 8px;
   border-radius: 6px;
   cursor: pointer;
+  white-space: nowrap;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
