@@ -1,4 +1,4 @@
-// Cadence v3.2 — Spicetify Studio Extension (Zero-Python + On-Demand ONNX AI Karaoke)
+// Cadence v3.2 — Spicetify Studio Extension (Zero-Python + On-Demand ONNX AI Karaoke + Share Copy Button)
 // Author: tripydro123
 
 (function CadenceStudio() {
@@ -9,8 +9,11 @@
 
   const STORAGE_KEY = "cadence_v32_settings";
   const CACHE_NAME = "cadence-onnx-weights-v1";
-  const MODEL_URL = "https://huggingface.co/StemSplitio/htdemucs-ft-vocals-onnx/resolve/main/htdemucs_ft_vocals_fp16.onnx";
+  const MODEL_URL = "https://huggingface.co/StemSplitio/htdemucs-ft-vocals-onnx/resolve/main/htdemucs_ft_vocals_fp16weights.onnx";
   const ORT_CDN = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js";
+
+  const INSTALL_WIN = "iwr -useb https://raw.githubusercontent.com/tripydro123/cadence/main/install.ps1 | iex";
+  const INSTALL_UNIX = "curl -fsSL https://raw.githubusercontent.com/tripydro123/cadence/main/install.sh | sh";
 
   const defaultState = {
     accentHex: "#fa2d48",
@@ -19,7 +22,7 @@
     micHud: false,
     vocalReduction: 0,
     spatialWidth: false,
-    eqBands: [0, 0, 0, 0, 0], // 60Hz, 230Hz, 910Hz, 3.6kHz, 14kHz
+    eqBands: [0, 0, 0, 0, 0],
     aiEngineActive: false
   };
 
@@ -29,6 +32,42 @@
 
   function saveState() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  async function copyToClipboard(text, btnEl, defaultLabel) {
+    let copied = false;
+    try {
+      if (window.Spicetify?.Platform?.ClipboardAPI?.copy) {
+        await Spicetify.Platform.ClipboardAPI.copy(text);
+        copied = true;
+      } else if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        copied = true;
+      }
+    } catch (e) {
+      copied = false;
+    }
+
+    if (!copied) {
+      const temp = document.createElement("textarea");
+      temp.value = text;
+      temp.style.position = "fixed";
+      temp.style.opacity = "0";
+      document.body.appendChild(temp);
+      temp.select();
+      copied = document.execCommand("copy");
+      document.body.removeChild(temp);
+    }
+
+    if (copied) {
+      btnEl.textContent = "Copied!";
+      if (window.Spicetify?.showNotification) {
+        Spicetify.showNotification("Copied to clipboard!");
+      }
+      setTimeout(() => {
+        btnEl.textContent = defaultLabel;
+      }, 2000);
+    }
   }
 
   function applyVisualPrefs() {
@@ -43,7 +82,6 @@
     }
   }
 
-  // Check if ONNX weights are already cached in Chromium Cache API
   async function isModelCached() {
     if (!("caches" in window)) return false;
     try {
@@ -55,7 +93,6 @@
     }
   }
 
-  // Load onnxruntime-web dynamically only when user clicks Download
   function loadOnnxRuntime() {
     return new Promise((resolve, reject) => {
       if (window.ort) return resolve(window.ort);
@@ -67,7 +104,6 @@
     });
   }
 
-  // On-Demand Download & Cache of HTDemucs-FT Vocals (166 MB fp16)
   async function downloadAndInitAiEngine(progressBtn, statusEl) {
     if (isDownloading) return;
     isDownloading = true;
@@ -130,7 +166,6 @@
     }
   }
 
-  // Web Audio API Engine (5-Band EQ + Spatial Widener + Vocal Attenuation)
   let audioCtx = null;
   let filters = [];
   let splitter = null;
@@ -208,7 +243,6 @@
     }
   }
 
-  // Floating Vertical Microphone Capsule HUD
   function createMicHud() {
     if (document.getElementById("cadence-mic-hud")) return;
     const hud = document.createElement("div");
@@ -244,6 +278,7 @@
         <button class="cadence-tab-btn active" data-tab="appearance">Appearance</button>
         <button class="cadence-tab-btn" data-tab="audio">5-Band EQ & Spatial</button>
         <button class="cadence-tab-btn" data-tab="karaoke">Karaoke & AI Engine</button>
+        <button class="cadence-tab-btn" data-tab="share">Share Theme</button>
       </div>
 
       <div class="cadence-panel active" data-panel="appearance">
@@ -304,9 +339,26 @@
           ${cached ? `<button id="cadence-ai-clear-btn" style="align-self:flex-end;background:none;border:none;color:#ff453a;font-size:11px;cursor:pointer;">Remove Cached Weights (Free 166 MB)</button>` : ""}
         </div>
       </div>
+
+      <div class="cadence-panel" data-panel="share">
+        <div class="cadence-row" style="flex-direction:column;align-items:stretch;gap:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-weight:600;font-size:13px;">Windows (PowerShell)</span>
+            <button id="cadence-copy-win" class="cadence-tab-btn active" style="padding:5px 12px;">Copy</button>
+          </div>
+          <code style="font-size:11px;background:rgba(0,0,0,0.35);padding:8px 10px;border-radius:6px;word-break:break-all;user-select:all;">${INSTALL_WIN}</code>
+        </div>
+
+        <div class="cadence-row" style="flex-direction:column;align-items:stretch;gap:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-weight:600;font-size:13px;">macOS & Linux (Terminal)</span>
+            <button id="cadence-copy-unix" class="cadence-tab-btn active" style="padding:5px 12px;">Copy</button>
+          </div>
+          <code style="font-size:11px;background:rgba(0,0,0,0.35);padding:8px 10px;border-radius:6px;word-break:break-all;user-select:all;">${INSTALL_UNIX}</code>
+        </div>
+      </div>
     `;
 
-    // Tab switching
     container.querySelectorAll(".cadence-tab-btn[data-tab]").forEach((btn) => {
       btn.addEventListener("click", () => {
         container.querySelectorAll(".cadence-tab-btn[data-tab]").forEach((b) => b.classList.remove("active"));
@@ -316,7 +368,6 @@
       });
     });
 
-    // Appearance controls
     container.querySelector("#cadence-accent-picker").addEventListener("input", (e) => {
       state.accentHex = e.target.value;
       applyVisualPrefs();
@@ -335,7 +386,6 @@
       saveState();
     });
 
-    // EQ controls
     container.querySelectorAll(".cadence-eq-slider").forEach((slider) => {
       slider.addEventListener("input", (e) => {
         const idx = Number(e.target.dataset.band);
@@ -355,7 +405,6 @@
       saveState();
     });
 
-    // Karaoke controls
     container.querySelector("#cadence-hud-toggle").addEventListener("change", (e) => {
       state.micHud = e.target.checked;
       applyVisualPrefs();
@@ -374,7 +423,6 @@
       saveState();
     });
 
-    // On-Demand AI Karaoke Download Button
     const dlBtn = container.querySelector("#cadence-ai-download-btn");
     const statusEl = container.querySelector("#cadence-ai-status");
     dlBtn.addEventListener("click", () => {
@@ -394,6 +442,12 @@
       });
     }
 
+    const copyWinBtn = container.querySelector("#cadence-copy-win");
+    copyWinBtn.addEventListener("click", () => copyToClipboard(INSTALL_WIN, copyWinBtn, "Copy"));
+
+    const copyUnixBtn = container.querySelector("#cadence-copy-unix");
+    copyUnixBtn.addEventListener("click", () => copyToClipboard(INSTALL_UNIX, copyUnixBtn, "Copy"));
+
     Spicetify.PopupModal.display({
       title: "Cadence v3.2 Studio",
       content: container,
@@ -409,5 +463,5 @@
 
   applyVisualPrefs();
   createMicHud();
-  console.log("[Cadence v3.2] Loaded (On-Demand ONNX AI Karaoke Ready).");
+  console.log("[Cadence v3.2] Loaded successfully.");
 })();
