@@ -1,19 +1,21 @@
-/* Cadence v3.2 — Lightweight Apple Music White & Dark Adaptive UI */
+/* Cadence v3.3 — Full Apple Music Desktop Layout (Top LCD Bar, Frosted Sidebars & Blurred Lyrics) */
 :root {
   --cadence-accent: #fa2d48;
-  --cadence-accent-soft: rgba(250, 45, 72, 0.12);
-  --cadence-surface: #ffffff;
-  --cadence-sidebar: #f5f5f7;
-  --cadence-elevated: #ffffff;
-  --cadence-card: #f5f5f7;
-  --cadence-surface-hover: rgba(0, 0, 0, 0.05);
-  --cadence-surface-press: rgba(0, 0, 0, 0.09);
-  --cadence-tinted: rgba(0, 0, 0, 0.05);
-  --cadence-border: rgba(0, 0, 0, 0.08);
-  --cadence-text: #1d1d1f;
-  --cadence-subtext: rgba(29, 29, 31, 0.65);
+  --cadence-accent-soft: rgba(250, 45, 72, 0.16);
+  --cadence-surface: #1f1f21;
+  --cadence-sidebar: #262629;
+  --cadence-elevated: #2c2c2e;
+  --cadence-card: #28282b;
+  --cadence-lcd-bg: rgba(255, 255, 255, 0.08);
+  --cadence-row-alt: rgba(255, 255, 255, 0.035);
+  --cadence-surface-hover: rgba(255, 255, 255, 0.08);
+  --cadence-surface-press: rgba(255, 255, 255, 0.13);
+  --cadence-tinted: rgba(255, 255, 255, 0.07);
+  --cadence-border: rgba(255, 255, 255, 0.1);
+  --cadence-text: #ffffff;
+  --cadence-subtext: rgba(255, 255, 255, 0.58);
   --cadence-radius: 12px;
-  --cadence-lyric-scale: 1.18;
+  --cadence-lyric-scale: 1.06;
 }
 
 /* Override Spotify Encore Theme Variables Globally */
@@ -52,7 +54,6 @@ body,
   color: var(--cadence-text) !important;
 }
 
-/* Main Canvas & Split-Pane Surfaces */
 body,
 .Root__top-container,
 .Root__main-view,
@@ -61,9 +62,204 @@ body,
 .os-content {
   background-color: var(--cadence-surface) !important;
   color: var(--cadence-text) !important;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif !important;
 }
 
-/* Strip Top Header, Filter Bar & Gradient Overlays */
+/* ==========================================================================
+   1. APPLE MUSIC TOP TRANSPORT BAR & CENTER LCD NOW-PLAYING PILL
+   ========================================================================== */
+body.cadence-top-player .Root__top-container {
+  display: grid !important;
+  grid-template-areas:
+    "global-nav global-nav global-nav"
+    "now-playing-bar now-playing-bar now-playing-bar"
+    "left-sidebar main-view right-sidebar" !important;
+  grid-template-rows: auto 56px 1fr !important;
+}
+
+body.cadence-top-player .Root__now-playing-bar {
+  grid-area: now-playing-bar !important;
+  position: relative !important;
+  width: 100% !important;
+  height: 56px !important;
+  background: color-mix(in srgb, var(--cadence-elevated) 82%, transparent) !important;
+  backdrop-filter: blur(32px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(180%) !important;
+  border-bottom: 1px solid var(--cadence-border) !important;
+  padding: 0 18px !important;
+  z-index: 85 !important;
+}
+
+body.cadence-top-player .main-nowPlayingBar-nowPlayingBar {
+  display: grid !important;
+  grid-template-columns: 1fr minmax(320px, 460px) 1fr !important;
+  align-items: center !important;
+  height: 56px !important;
+  padding: 0 !important;
+  gap: 16px !important;
+}
+
+/* Move Transport Controls (Shuffle, Prev, Play, Next, Repeat) to Left of LCD Pill */
+body.cadence-top-player .main-nowPlayingBar-center {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  justify-self: end !important;
+  width: auto !important;
+  max-width: none !important;
+  position: static !important;
+}
+
+body.cadence-top-player .player-controls__buttons {
+  margin-bottom: 0 !important;
+  gap: 10px !important;
+  align-items: center !important;
+}
+
+/* Clean Apple Music Monochrome Transport Icons (No Heavy Circle on Play/Pause) */
+body.cadence-top-player .main-playPauseButton-button {
+  background: transparent !important;
+  color: var(--cadence-text) !important;
+  width: 32px !important;
+  height: 32px !important;
+  transform: scale(1.18);
+}
+
+body.cadence-top-player .main-playPauseButton-button svg {
+  fill: var(--cadence-text) !important;
+  color: var(--cadence-text) !important;
+}
+
+/* Center LCD Now-Playing Box (Album Thumb + Centered Title/Artist + Bottom Scrubber) */
+body.cadence-top-player .main-nowPlayingBar-left {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  width: 100% !important;
+  height: 42px !important;
+  background: var(--cadence-lcd-bg) !important;
+  border: 1px solid var(--cadence-border) !important;
+  border-radius: 8px !important;
+  padding: 2px 10px 2px 3px !important;
+  position: relative !important;
+  overflow: hidden !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+body.cadence-top-player .main-nowPlayingWidget-nowPlaying {
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative !important;
+}
+
+body.cadence-top-player .main-nowPlayingWidget-coverArt {
+  position: absolute !important;
+  left: 0 !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  margin: 0 !important;
+}
+
+body.cadence-top-player .main-nowPlayingWidget-coverArt .cover-art {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 5px !important;
+}
+
+body.cadence-top-player .main-nowPlayingWidget-trackInfo {
+  text-align: center !important;
+  align-items: center !important;
+  padding: 0 42px !important;
+  width: 100% !important;
+}
+
+body.cadence-top-player .main-nowPlayingWidget-trackName a {
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  color: var(--cadence-text) !important;
+}
+
+body.cadence-top-player .main-nowPlayingWidget-artistName a {
+  font-size: 11px !important;
+  color: var(--cadence-subtext) !important;
+}
+
+/* Pin Thin Scrubber Progress Bar to Bottom Edge of Center LCD Box */
+body.cadence-top-player .playback-bar {
+  position: absolute !important;
+  bottom: 0 !important;
+  left: calc(50% - 190px) !important;
+  width: 418px !important;
+  max-width: calc(460px - 42px) !important;
+  height: 4px !important;
+  z-index: 90 !important;
+  pointer-events: auto !important;
+}
+
+body.cadence-top-player .playback-bar__progress-time-elapsed,
+body.cadence-top-player .main-playbackBarRemainingTime-container {
+  display: none !important;
+}
+
+body.cadence-top-player .progress-bar {
+  --progress-bar-height: 2.5px !important;
+  --fg-color: var(--cadence-subtext) !important;
+  --bg-color: rgba(128, 128, 135, 0.25) !important;
+}
+
+/* Right Cluster: Volume Slider + Lyrics + Queue + Fullscreen */
+body.cadence-top-player .main-nowPlayingBar-right {
+  grid-column: 3 !important;
+  grid-row: 1 !important;
+  width: auto !important;
+  justify-self: start !important;
+}
+
+body.cadence-top-player .main-nowPlayingBar-extraControls {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+/* Move Volume Slider to the Left of Lyrics/Queue Icons (Matching Screenshot) */
+body.cadence-top-player .volume-bar {
+  order: -1 !important;
+  width: 96px !important;
+  margin-right: 8px !important;
+}
+
+.Root__now-playing-bar button:not(.main-playPauseButton-button) svg {
+  color: var(--cadence-subtext) !important;
+  fill: currentColor !important;
+}
+
+.Root__now-playing-bar button:not(.main-playPauseButton-button):hover svg,
+.Root__now-playing-bar button[aria-checked="true"] svg,
+.Root__now-playing-bar button[data-active="true"] svg {
+  color: var(--cadence-accent) !important;
+}
+
+/* Optional Bottom Floating Pill Mode (when Top Player is toggled off) */
+body.cadence-floating-player:not(.cadence-top-player) .Root__now-playing-bar {
+  position: fixed !important;
+  bottom: 14px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: min(94vw, 1180px) !important;
+  border-radius: 20px !important;
+  background: color-mix(in srgb, var(--cadence-elevated) 88%, transparent) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  border: 1px solid var(--cadence-border) !important;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.22) !important;
+  padding: 6px 16px !important;
+  z-index: 90 !important;
+}
+
+/* ==========================================================================
+   2. TOP GLOBAL NAVIGATION & CLEAN HEADERS (NO DARK GRADIENTS)
+   ========================================================================== */
 .main-topBar-container,
 .main-topBar-background,
 .main-topBar-overlay,
@@ -80,12 +276,9 @@ body,
   box-shadow: none !important;
 }
 
-/* Frosted Top Navigation Bar */
-.Root__globalNav,
-.main-topBar-container {
-  background: color-mix(in srgb, var(--cadence-surface) 90%, transparent) !important;
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
+.Root__globalNav {
+  background: color-mix(in srgb, var(--cadence-elevated) 86%, transparent) !important;
+  backdrop-filter: blur(28px) !important;
   border-bottom: 1px solid var(--cadence-border) !important;
 }
 
@@ -95,24 +288,51 @@ body,
   fill: currentColor !important;
 }
 
-/* Clean Filter Chips ("All", "Music", "Podcasts", "Audiobooks") */
-.ChipInnerComponent-sm,
-button[role="checkbox"][aria-checked="false"] > span,
-div[role="list"] button[aria-pressed="false"] {
+.x-searchInput-searchInputInput,
+form[role="search"] input {
   background-color: var(--cadence-tinted) !important;
   color: var(--cadence-text) !important;
   border: 1px solid var(--cadence-border) !important;
+  border-radius: 8px !important;
 }
 
-.ChipInnerComponent-sm-selected,
-button[role="checkbox"][aria-checked="true"] > span,
-div[role="list"] button[aria-pressed="true"] {
-  background-color: var(--cadence-accent) !important;
-  color: #ffffff !important;
-  border-color: var(--cadence-accent) !important;
+/* ==========================================================================
+   3. TRANSLUCENT FROSTED SIDEBARS WITH ALBUM-ART WARMTH BLEED-THROUGH
+   ========================================================================== */
+.Root__nav-bar,
+.main-yourLibraryX-entryPoints,
+.main-yourLibraryX-libraryContainer,
+.main-yourLibraryX-libraryRootlist {
+  background: color-mix(in srgb, var(--cadence-sidebar) 76%, transparent) !important;
+  backdrop-filter: blur(36px) saturate(175%) !important;
+  -webkit-backdrop-filter: blur(36px) saturate(175%) !important;
+  border-right: 1px solid var(--cadence-border) !important;
+  box-shadow: none !important;
+  color: var(--cadence-text) !important;
 }
 
-/* Remove Dark Fade Masks on Shelf & Sidebar Edges */
+.main-yourLibraryX-navLinkActive,
+.main-yourLibraryX-listItemActive {
+  background-color: var(--cadence-accent-soft) !important;
+  color: var(--cadence-accent) !important;
+  border-radius: 9px !important;
+  font-weight: 700 !important;
+}
+
+/* Right Queue / Up Next Sidebar (Screenshot 1 & 3) */
+.Root__right-sidebar,
+.main-nowPlayingView-content,
+.main-nowPlayingView-section,
+aside[aria-label="Now playing view"] {
+  background: color-mix(in srgb, var(--cadence-sidebar) 78%, transparent) !important;
+  backdrop-filter: blur(36px) saturate(175%) !important;
+  -webkit-backdrop-filter: blur(36px) saturate(175%) !important;
+  border-left: 1px solid var(--cadence-border) !important;
+  box-shadow: none !important;
+  color: var(--cadence-text) !important;
+}
+
+/* Remove Dark Fade Shades on Shelf & Sidebar Edges */
 .main-shelf-shelf::before,
 .main-shelf-shelf::after,
 [data-testid="carousel-container"]::before,
@@ -132,65 +352,136 @@ div[role="list"] button[aria-pressed="true"] {
   width: 1px !important;
 }
 
-/* Apple Music Left Sidebar */
-.Root__nav-bar,
-.main-yourLibraryX-entryPoints,
-.main-yourLibraryX-libraryContainer,
-.main-yourLibraryX-libraryRootlist {
-  background-color: var(--cadence-sidebar) !important;
-  border-right: 1px solid var(--cadence-border) !important;
-  box-shadow: none !important;
+/* ==========================================================================
+   4. APPLE MUSIC ALBUM HEADER, CRIMSON BUTTONS & ALTERNATING TRACK PILLS
+   ========================================================================== */
+body.cadence-editorial-headers .main-entityHeader-title h1 {
+  font-weight: 800 !important;
+  letter-spacing: -0.025em !important;
   color: var(--cadence-text) !important;
 }
 
-.main-yourLibraryX-navLinkActive,
-.main-yourLibraryX-listItemActive {
-  background-color: var(--cadence-accent-soft) !important;
+/* Artist Subtitle in Apple Music Crimson (#fa2d48) */
+body.cadence-editorial-headers .main-entityHeader-creatorButton,
+body.cadence-editorial-headers .main-entityHeader-metaData a {
   color: var(--cadence-accent) !important;
-  border-radius: 10px !important;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
+  font-size: 18px !important;
 }
 
-/* Right Now-Playing Sidebar */
-.Root__right-sidebar,
-.main-nowPlayingView-content,
-.main-nowPlayingView-section,
-aside[aria-label="Now playing view"] {
-  background-color: var(--cadence-sidebar) !important;
-  border-left: 1px solid var(--cadence-border) !important;
-  box-shadow: none !important;
-  color: var(--cadence-text) !important;
+body.cadence-editorial-headers .main-entityHeader-imageContainer img {
+  border-radius: var(--cadence-radius) !important;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.32) !important;
 }
 
-body.cadence-light-mode .main-nowPlayingView-lyricsContent,
-body.cadence-light-mode .main-nowPlayingView-lyricsContent p,
-body.cadence-light-mode .main-nowPlayingView-lyricsContent div {
-  color: var(--cadence-text) !important;
+/* Apple Music Crimson Rectangular "Play" & "Shuffle" Action Bar Buttons */
+.main-actionBar-ActionBarRow button[data-testid="play-button"] {
+  background-color: var(--cadence-accent) !important;
+  color: #ffffff !important;
+  border-radius: 8px !important;
+  height: 36px !important;
+  padding: 0 22px !important;
+  min-width: 108px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
 }
 
-/* Force Text & Icons Across Cards, Rows, and Headings */
-h1, h2, h3, h4,
-.main-entityHeader-title h1,
-.main-shelf-title,
-.main-trackList-rowTitle,
-.main-cardHeader-text,
-.main-nowPlayingWidget-trackName a,
-.main-yourLibraryX-listRowEntityTitle {
-  color: var(--cadence-text) !important;
-  letter-spacing: -0.015em;
+.main-actionBar-ActionBarRow button[data-testid="play-button"]::after {
+  content: "Play";
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #ffffff;
 }
 
-.main-trackList-rowSubTitle,
-.main-trackList-rowSubTitle a,
-.main-cardSubHeader-text,
-.main-nowPlayingWidget-artistName a,
-.main-yourLibraryX-listRowSubtitle,
-.playback-bar__progress-time-elapsed,
-.main-playbackBarRemainingTime-container {
-  color: var(--cadence-subtext) !important;
+.main-actionBar-ActionBarRow button[data-testid="play-button"] svg {
+  width: 15px !important;
+  height: 15px !important;
+  fill: #ffffff !important;
+  color: #ffffff !important;
 }
 
-/* Lightweight Static Album-Art Ambient Backdrop (Zero GPU Animation Lag) */
+.main-actionBar-ActionBarRow button[aria-label*="Shuffle"],
+.main-actionBar-ActionBarRow button[data-testid="control-button-shuffle"] {
+  background-color: var(--cadence-accent) !important;
+  color: #ffffff !important;
+  border-radius: 8px !important;
+  height: 36px !important;
+  padding: 0 20px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+}
+
+.main-actionBar-ActionBarRow button[aria-label*="Shuffle"]::after {
+  content: "Shuffle";
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.main-actionBar-ActionBarRow button[aria-label*="Shuffle"] svg {
+  fill: #ffffff !important;
+  color: #ffffff !important;
+}
+
+/* Alternating Rounded Tracklist Rows (Screenshot 2) */
+.main-trackList-trackListRow {
+  border-radius: 8px !important;
+  margin-bottom: 2px !important;
+  border: none !important;
+}
+
+.main-trackList-trackListRow:nth-child(odd) {
+  background-color: var(--cadence-row-alt) !important;
+}
+
+.main-trackList-trackListRow:hover {
+  background-color: var(--cadence-surface-hover) !important;
+}
+
+/* Active Track & Three-Dot Menu Icons in Apple Music Crimson */
+.main-trackList-active .main-trackList-rowTitle,
+.main-trackList-active .main-trackList-rowMarker,
+.main-trackList-rowMoreButton svg,
+button[aria-label*="More options"] svg {
+  color: var(--cadence-accent) !important;
+  fill: currentColor !important;
+}
+
+/* Squircle Cards & Thumbnails */
+.main-card-card,
+.main-cardImage-imageWrapper,
+.main-coverSlotCollapsed-container {
+  border-radius: var(--cadence-radius) !important;
+}
+
+body.cadence-squircle-cards .main-card-card {
+  background-color: var(--cadence-card) !important;
+  border: 1px solid var(--cadence-border) !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+body.cadence-squircle-cards .main-card-card:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.16) !important;
+}
+
+button.main-playButton-button {
+  background-color: var(--cadence-accent) !important;
+  color: #ffffff !important;
+}
+
+button.main-playButton-button svg {
+  fill: #ffffff !important;
+  color: #ffffff !important;
+}
+
+/* ==========================================================================
+   5. DYNAMIC ALBUM-ART MESH BACKDROP
+   ========================================================================== */
 #cadence-art-backdrop {
   position: fixed;
   inset: 0;
@@ -205,116 +496,77 @@ h1, h2, h3, h4,
 
 .cadence-backdrop-orb {
   position: absolute;
-  width: 48vw;
-  height: 48vw;
+  width: 55vw;
+  height: 55vw;
   border-radius: 50%;
   background-size: cover;
   background-position: center;
-  filter: blur(70px) saturate(150%);
-  opacity: 0.16;
+  filter: blur(85px) saturate(175%);
+  opacity: 0.24;
   transition: background-image 0.9s ease, opacity 0.5s ease;
 }
 
 body.cadence-light-mode .cadence-backdrop-orb {
-  opacity: 0.08;
+  opacity: 0.11;
 }
 
-.cadence-backdrop-orb.orb-a { top: -15%; left: -6%; }
+.cadence-backdrop-orb.orb-a { top: -15%; left: -8%; }
 .cadence-backdrop-orb.orb-b { bottom: -18%; right: -8%; }
 
-/* Search Pill */
-.x-searchInput-searchInputInput,
-form[role="search"] input {
-  background-color: var(--cadence-tinted) !important;
-  color: var(--cadence-text) !important;
-  border: 1px solid var(--cadence-border) !important;
-  border-radius: 10px !important;
+/* ==========================================================================
+   6. APPLE MUSIC KARAOKE LYRICS WITH PROGRESSIVE INACTIVE BLUR (SCREENSHOT 3)
+   ========================================================================== */
+.lyrics-lyrics-background {
+  backdrop-filter: blur(85px) saturate(185%) brightness(0.62) !important;
 }
 
-/* Apple Music Floating Frosted-Glass Player Pill */
-body.cadence-floating-player .Root__now-playing-bar {
-  position: fixed !important;
-  bottom: 14px !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-  width: min(94vw, 1180px) !important;
-  border-radius: 20px !important;
-  background: color-mix(in srgb, var(--cadence-elevated) 90%, transparent) !important;
-  backdrop-filter: blur(22px) !important;
-  -webkit-backdrop-filter: blur(22px) !important;
-  border: 1px solid var(--cadence-border) !important;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14) !important;
-  padding: 6px 16px !important;
-  z-index: 90 !important;
-}
-
-.Root__now-playing-bar button:not(.main-playPauseButton-button) svg {
-  color: var(--cadence-subtext) !important;
-  fill: currentColor !important;
-}
-
-.Root__now-playing-bar button:not(.main-playPauseButton-button):hover svg {
-  color: var(--cadence-text) !important;
-}
-
-body.cadence-floating-player .main-view-container__scroll-node-child {
-  padding-bottom: 105px !important;
-}
-
-.playback-bar__progress-time-elapsed,
-.main-playbackBarRemainingTime-container {
-  font-variant-numeric: tabular-nums !important;
-}
-
-/* Clean Editorial Playlist & Album Headers */
-body.cadence-editorial-headers .main-entityHeader-title h1 {
-  letter-spacing: -0.025em !important;
+.lyrics-lyricsContent-lyric {
   font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.25 !important;
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease, filter 0.28s ease, text-shadow 0.25s ease !important;
+  transform-origin: left center !important;
 }
 
-body.cadence-editorial-headers .main-entityHeader-imageContainer img {
-  border-radius: var(--cadence-radius) !important;
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.18) !important;
+/* Soft Blur on Inactive Lines (Matching Screenshot 3) */
+body.cadence-lyric-blur .lyrics-lyricsContent-lyric:not(.lyrics-lyricsContent-active),
+body.cadence-lyric-blur [data-testid="lyrics-line"]:not([data-active="true"]) {
+  filter: blur(1.35px) !important;
+  opacity: 0.44 !important;
 }
 
-/* Apple Music Squircle Cards & Track Rows */
-.main-card-card,
-.main-cardImage-imageWrapper,
-.main-coverSlotCollapsed-container,
-.main-nowPlayingWidget-coverArt .cover-art {
-  border-radius: var(--cadence-radius) !important;
+body.cadence-lyric-blur .lyrics-lyricsContent-lyric:hover,
+body.cadence-lyric-blur [data-testid="lyrics-line"]:hover {
+  filter: blur(0px) !important;
+  opacity: 0.85 !important;
 }
 
-body.cadence-squircle-cards .main-card-card {
-  background-color: var(--cadence-card) !important;
-  border: 1px solid var(--cadence-border) !important;
-  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
-}
-
-body.cadence-squircle-cards .main-card-card:hover {
-  transform: translateY(-3px) !important;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12) !important;
-}
-
-.main-trackList-trackListRow:hover {
-  background-color: var(--cadence-surface-hover) !important;
-  border-radius: 8px !important;
-}
-
-/* Accent Play Buttons */
-button.main-playButton-button,
-.main-playPauseButton-button {
-  background-color: var(--cadence-accent) !important;
+/* Razor-Sharp Glowing Active Lyric Line */
+.lyrics-lyricsContent-lyric.lyrics-lyricsContent-active,
+[data-testid="lyrics-line"][data-active="true"] {
+  filter: blur(0px) !important;
+  opacity: 1 !important;
   color: #ffffff !important;
+  transform: scale(var(--cadence-lyric-scale)) !important;
 }
 
-button.main-playButton-button svg,
-.main-playPauseButton-button svg {
-  fill: #ffffff !important;
-  color: #ffffff !important;
+body.cadence-lyric-glow .lyrics-lyricsContent-lyric.lyrics-lyricsContent-active,
+body.cadence-lyric-glow [data-testid="lyrics-line"][data-active="true"] {
+  text-shadow: 0 0 24px rgba(255, 255, 255, 0.45) !important;
 }
 
-/* Minimal Scrollbars */
+body.cadence-lyric-theater .Root__nav-bar,
+body.cadence-lyric-theater .Root__right-sidebar {
+  opacity: 0.35;
+  transition: opacity 0.3s ease;
+}
+
+body.cadence-lyric-theater .Root__nav-bar:hover,
+body.cadence-lyric-theater .Root__right-sidebar:hover {
+  opacity: 1;
+}
+
+/* Minimal Scrollbars & Ad Suppression */
 body.cadence-compact-ui ::-webkit-scrollbar {
   width: 5px !important;
   height: 5px !important;
@@ -325,42 +577,15 @@ body.cadence-compact-ui ::-webkit-scrollbar-thumb {
   border-radius: 99px !important;
 }
 
-/* AdBlock Suppression */
 body.cadence-adblock-active .main-leaderboardComponent-container,
 body.cadence-adblock-active div[aria-label="Upgrade to Premium"],
 body.cadence-adblock-active button[title="Upgrade to Premium"] {
   display: none !important;
 }
 
-/* Karaoke Lyrics Enhancements */
-.lyrics-lyricsContent-lyric {
-  transition: transform 0.25s ease, color 0.2s ease, text-shadow 0.25s ease !important;
-  transform-origin: left center !important;
-}
-
-.lyrics-lyricsContent-lyric.lyrics-lyricsContent-active,
-[data-testid="lyrics-line"][data-active="true"] {
-  transform: scale(var(--cadence-lyric-scale)) !important;
-  font-weight: 800 !important;
-}
-
-body.cadence-lyric-glow .lyrics-lyricsContent-lyric.lyrics-lyricsContent-active,
-body.cadence-lyric-glow [data-testid="lyrics-line"][data-active="true"] {
-  text-shadow: 0 0 18px color-mix(in srgb, var(--cadence-accent) 70%, transparent) !important;
-}
-
-body.cadence-lyric-theater .Root__nav-bar,
-body.cadence-lyric-theater .Root__right-sidebar {
-  opacity: 0.32;
-  transition: opacity 0.3s ease;
-}
-
-body.cadence-lyric-theater .Root__nav-bar:hover,
-body.cadence-lyric-theater .Root__right-sidebar:hover {
-  opacity: 1;
-}
-
-/* Studio Modal Adaptive White/Dark Container */
+/* ==========================================================================
+   7. CADENCE STUDIO MODAL (3 COLOR WHEELS & THEME CONTROLS)
+   ========================================================================== */
 .GenericModal,
 .GenericModal > div,
 .main-embedWidgetGenerator-container {
@@ -410,7 +635,7 @@ body.cadence-lyric-theater .Root__right-sidebar:hover {
 .cadence-panel {
   display: none;
   flex-direction: column;
-  gap: 12px;
+  gap: 11px;
 }
 
 .cadence-panel.active {
@@ -455,7 +680,6 @@ body.cadence-lyric-theater .Root__right-sidebar:hover {
   flex-shrink: 0;
 }
 
-/* 3 Circular Color Wheels Grid */
 .cadence-wheels-grid-3 {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -482,7 +706,7 @@ body.cadence-lyric-theater .Root__right-sidebar:hover {
 .cadence-wheel-box {
   position: relative;
   border-radius: 50%;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(128, 128, 128, 0.25);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25), inset 0 0 0 1px rgba(128, 128, 128, 0.25);
   cursor: crosshair;
 }
 
@@ -532,7 +756,7 @@ body.cadence-lyric-theater .Root__right-sidebar:hover {
   justify-content: space-between;
   align-items: center;
   background: var(--cadence-tinted);
-  padding: 11px 14px;
+  padding: 10px 14px;
   border-radius: 11px;
   border: 1px solid var(--cadence-border);
   font-size: 12.5px;
