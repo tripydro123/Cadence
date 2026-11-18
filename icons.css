@@ -1,0 +1,165 @@
+/* Cadence v3.5 — Apple Music Iconography, 68px Left Rail & Segmented Pills */
+
+/* 68px Compact Apple Music Left Rail */
+body.cadence-apple-rail .Root__nav-bar {
+  width: 68px !important;
+  min-width: 68px !important;
+  max-width: 68px !important;
+  align-items: center !important;
+  padding: 10px 0 14px !important;
+}
+
+body.cadence-apple-rail .main-yourLibraryX-entryPoints,
+body.cadence-apple-rail .main-yourLibraryX-libraryContainer {
+  width: 68px !important;
+  align-items: center !important;
+  padding: 0 !important;
+}
+
+/* Hide Text Labels & Filter Chips in 68px Icon Rail Mode */
+body.cadence-apple-rail .main-yourLibraryX-headerContent span,
+body.cadence-apple-rail .main-yourLibraryX-filterArea,
+body.cadence-apple-rail .main-yourLibraryX-searchAndSort,
+body.cadence-apple-rail .main-yourLibraryX-listRowDetails,
+body.cadence-apple-rail .main-yourLibraryX-collapseButton span {
+  display: none !important;
+}
+
+/* 38px x 38px (8px Radius) Playlist Thumbnails in Left Rail */
+body.cadence-apple-rail .main-yourLibraryX-listItem {
+  justify-content: center !important;
+  padding: 4px 0 !important;
+}
+
+body.cadence-apple-rail .main-yourLibraryX-listRowEntityImage,
+body.cadence-apple-rail .main-yourLibraryX-listItem .cover-art,
+body.cadence-apple-rail .main-yourLibraryX-listItem img {
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Apple Music Logo Badge & Green (#1D8F5A) Bottom Bookmark Button */
+#cadence-apple-rail-logo {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cadence-accent);
+  margin: 4px auto 6px;
+  cursor: pointer;
+  border-radius: 9px;
+  transition: transform 0.18s ease, background-color 0.18s ease;
+}
+
+#cadence-apple-rail-logo:hover {
+  background-color: var(--cadence-surface-hover);
+  transform: scale(1.06);
+}
+
+#cadence-rail-bookmark-btn {
+  width: 38px;
+  height: 38px;
+  min-height: 38px;
+  border-radius: 9px;
+  background-color: #1d8f5a;
+  color: #ffffff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: auto auto 4px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(29, 143, 90, 0.35);
+  transition: transform 0.18s ease, filter 0.18s ease;
+}
+
+#cadence-rail-bookmark-btn:hover {
+  transform: scale(1.06);
+  filter: brightness(1.08);
+}
+
+/* 40px Circular Crimson Play/Pause & 32px Dark Options Circle on Hero Banner */
+.artist-artistOverview-overview .main-actionBar-ActionBarRow button[data-testid="play-button"],
+.main-entityHeader-headerText + div button[data-testid="play-button"] {
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  background-color: var(--cadence-accent) !important;
+  box-shadow: 0 6px 18px rgba(250, 45, 72, 0.42) !important;
+}
+
+.artist-artistOverview-overview .main-actionBar-ActionBarRow button[data-testid="play-button"]::after {
+  content: none !important;
+}
+
+.artist-artistOverview-overview .main-actionBar-ActionBarRow button[aria-label*="More options"] {
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  border-radius: 50% !important;
+  background-color: rgba(28, 28, 30, 0.72) !important;
+  backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+.artist-artistOverview-overview .main-actionBar-ActionBarRow button[aria-label*="More options"] svg {
+  fill: var(--cadence-accent) !important;
+  color: var(--cadence-accent) !important;
+}
+
+/* Crimson Three-Dot Menus Across All Track & Queue Rows */
+.main-trackList-rowMoreButton svg,
+.main-nowPlayingView-queueItem button svg,
+aside[aria-label="Now playing view"] button[aria-label*="More"] svg {
+  fill: var(--cadence-accent) !important;
+  color: var(--cadence-accent) !important;
+}
+
+/* Right Queue Sidebar (270px) & "Playing next" / "History" Segmented Pill Bar */
+.Root__right-sidebar {
+  width: 270px !important;
+  min-width: 270px !important;
+}
+
+#cadence-queue-segmented-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  background: rgba(0, 0, 0, 0.28);
+  padding: 3px;
+  border-radius: 8px;
+  margin: 10px 12px 8px;
+  border: 1px solid var(--cadence-border);
+}
+
+.cadence-seg-tab {
+  background: transparent;
+  border: none;
+  color: var(--cadence-subtext);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.cadence-seg-tab.active {
+  background: rgba(255, 255, 255, 0.16);
+  color: var(--cadence-text);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+
+/* 36px x 36px (6px Radius) Right Queue Thumbnails */
+.Root__right-sidebar .main-trackList-rowImage,
+.Root__right-sidebar img {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 6px !important;
+}
