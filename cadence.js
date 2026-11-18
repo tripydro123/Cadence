@@ -1,4 +1,4 @@
-// Cadence v3.2 — Spicetify Studio Extension (Zero-Python + On-Demand ONNX AI Karaoke + Share Copy Button)
+// Cadence v3.2 — Spicetify Studio Extension (Zero-Python + Robust DSP Karaoke + AI Ready)
 // Author: tripydro123
 
 (function CadenceStudio() {
@@ -8,10 +8,6 @@
   }
 
   const STORAGE_KEY = "cadence_v32_settings";
-  const CACHE_NAME = "cadence-onnx-weights-v1";
-  const MODEL_URL = "https://huggingface.co/StemSplitio/htdemucs-ft-vocals-onnx/resolve/main/htdemucs_ft_vocals_fp16weights.onnx";
-  const ORT_CDN = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js";
-
   const INSTALL_WIN = "iwr -useb https://raw.githubusercontent.com/tripydro123/cadence/main/install.ps1 | iex";
   const INSTALL_UNIX = "curl -fsSL https://raw.githubusercontent.com/tripydro123/cadence/main/install.sh | sh";
 
@@ -22,13 +18,10 @@
     micHud: false,
     vocalReduction: 0,
     spatialWidth: false,
-    eqBands: [0, 0, 0, 0, 0],
-    aiEngineActive: false
+    eqBands: [0, 0, 0, 0, 0]
   };
 
   let state = Object.assign({}, defaultState, JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"));
-  let ortSession = null;
-  let isDownloading = false;
 
   function saveState() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -82,83 +75,7 @@
     }
   }
 
-  async function isModelCached() {
-    if (!("caches" in window)) return false;
-    try {
-      const cache = await caches.open(CACHE_NAME);
-      const match = await cache.match(MODEL_URL);
-      return !!match;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  function loadOnnxRuntime() {
-    return new Promise((resolve, reject) => {
-      if (window.ort) return resolve(window.ort);
-      const script = document.createElement("script");
-      script.src = ORT_CDN;
-      script.onload = () => resolve(window.ort);
-      script.onerror = () => reject(new Error("Failed to load ONNX Runtime Web."));
-      document.head.appendChild(script);
-    });
-  }
-
-  async function downloadAndInitAiEngine(progressBtn, statusEl) {
-    if (isDownloading) return;
-    isDownloading = true;
-    progressBtn.disabled = true;
-
-    try {
-      statusEl.textContent = "Loading ONNX Runtime Web...";
-      await loadOnnxRuntime();
-
-      const cache = await caches.open(CACHE_NAME);
-      let response = await cache.match(MODEL_URL);
-
-      if (!response) {
-        statusEl.textContent = "Downloading AI Model Weights (166 MB)...";
-        const fetchRes = await fetch(MODEL_URL);
-        if (!fetchRes.ok) throw new Error(`HTTP ${fetchRes.status}`);
-
-        const blob = await fetchRes.blob();
-        const cacheResponse = new Response(blob, {
-          headers: { "Content-Type": "application/octet-stream" }
-        });
-        await cache.put(MODEL_URL, cacheResponse);
-        response = await cache.match(MODEL_URL);
-      }
-
-      statusEl.textContent = "Initializing HTDemucs-FT ONNX Session...";
-      const buffer = await response.arrayBuffer();
-
-      try {
-        ortSession = await window.ort.InferenceSession.create(buffer, {
-          executionProviders: ["webgpu", "wasm"]
-        });
-      } catch (e) {
-        console.warn("[Cadence] WebGPU provider failed, falling back to WASM:", e);
-        ortSession = await window.ort.InferenceSession.create(buffer, {
-          executionProviders: ["wasm"]
-        });
-      }
-
-      state.aiEngineActive = true;
-      saveState();
-      statusEl.textContent = "AI Karaoke Engine Ready (Cached Locally)";
-      progressBtn.textContent = "AI Engine Downloaded & Active";
-      if (window.Spicetify?.showNotification) {
-        Spicetify.showNotification("Cadence AI Karaoke (HTDemucs-FT ONNX) Ready!");
-      }
-    } catch (err) {
-      statusEl.textContent = `Download failed: ${err.message}`;
-      progressBtn.disabled = false;
-      progressBtn.textContent = "Retry AI Karaoke Download (166 MB)";
-    } finally {
-      isDownloading = false;
-    }
-  }
-
+  // Web Audio API Engine (5-Band EQ + Spatial Widener + High-Performance Vocal Attenuation)
   let audioCtx = null;
   let filters = [];
   let splitter = null;
@@ -262,7 +179,6 @@
   }
 
   async function openCadenceModal() {
-    const cached = await isModelCached();
     const container = document.createElement("div");
     container.className = "cadence-studio-wrap";
 
@@ -270,7 +186,7 @@
       <div class="cadence-tabs">
         <button class="cadence-tab-btn active" data-tab="appearance">Appearance</button>
         <button class="cadence-tab-btn" data-tab="audio">5-Band EQ & Spatial</button>
-        <button class="cadence-tab-btn" data-tab="karaoke">Karaoke & AI Engine</button>
+        <button class="cadence-tab-btn" data-tab="karaoke">Karaoke & Audio</button>
         <button class="cadence-tab-btn" data-tab="share">Share Theme</button>
       </div>
 
@@ -317,19 +233,11 @@
           <span>Vocal Attenuation Level (<span id="cadence-vocal-pct">${state.vocalReduction}</span>%)</span>
           <input type="range" id="cadence-modal-vocal" min="0" max="100" value="${state.vocalReduction}" />
         </div>
-        <div class="cadence-row" style="flex-direction:column;align-items:stretch;gap:10px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <div>
-              <div style="font-weight:600;font-size:13px;">AI Vocal Separation (HTDemucs-FT ONNX)</div>
-              <div id="cadence-ai-status" style="font-size:11px;opacity:0.75;margin-top:2px;">
-                ${cached ? "Cached locally (166 MB fp16 weights)" : "Optional — uses fast DSP mode until downloaded"}
-              </div>
-            </div>
-            <button id="cadence-ai-download-btn" class="cadence-tab-btn active" style="padding:8px 14px;">
-              ${cached ? (ortSession ? "AI Engine Active" : "Load Cached AI Engine") : "Download AI Karaoke (166 MB)"}
-            </button>
+        <div class="cadence-row" style="flex-direction:column;align-items:flex-start;gap:6px;">
+          <div style="font-weight:600;font-size:13px;">High-Performance DSP Karaoke Engine</div>
+          <div style="font-size:11px;opacity:0.75;line-height:1.4;">
+            Active and running instantly in real-time via Web Audio API phase inversion. Zero memory footprint, zero downloads needed.
           </div>
-          ${cached ? `<button id="cadence-ai-clear-btn" style="align-self:flex-end;background:none;border:none;color:#ff453a;font-size:11px;cursor:pointer;">Remove Cached Weights (Free 166 MB)</button>` : ""}
         </div>
       </div>
 
@@ -415,25 +323,6 @@
       updateAudioParams();
       saveState();
     });
-
-    const dlBtn = container.querySelector("#cadence-ai-download-btn");
-    const statusEl = container.querySelector("#cadence-ai-status");
-    dlBtn.addEventListener("click", () => {
-      downloadAndInitAiEngine(dlBtn, statusEl);
-    });
-
-    const clearBtn = container.querySelector("#cadence-ai-clear-btn");
-    if (clearBtn) {
-      clearBtn.addEventListener("click", async () => {
-        await caches.delete(CACHE_NAME);
-        ortSession = null;
-        state.aiEngineActive = false;
-        saveState();
-        statusEl.textContent = "Cached weights removed.";
-        dlBtn.textContent = "Download AI Karaoke (166 MB)";
-        clearBtn.remove();
-      });
-    }
 
     const copyWinBtn = container.querySelector("#cadence-copy-win");
     copyWinBtn.addEventListener("click", () => copyToClipboard(INSTALL_WIN, copyWinBtn, "Copy"));
