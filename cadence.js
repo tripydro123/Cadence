@@ -1,4 +1,4 @@
-// Cadence v3.2 — Spicetify Studio Extension (Zero-Python + Robust DSP Karaoke + Player Sync)
+// Cadence v3.2 — Spicetify Studio Extension
 // Author: tripydro123
 
 (function CadenceStudio() {
@@ -75,7 +75,6 @@
     }
   }
 
-  // Web Audio API Engine (5-Band EQ + Spatial Widener + High-Performance Vocal Attenuation)
   let audioCtx = null;
   let filters = [];
   let splitter = null;
@@ -84,7 +83,7 @@
   let wiredElement = null;
 
   function initAudioEngine() {
-    const mediaEl = document.querySelector("video, audio") || document.getElementById("audio-player");
+    const mediaEl = document.querySelector("video, audio") || document.querySelector("#audio-player") || document.querySelector(".main-lyricBackground-background");
     if (!mediaEl) return;
 
     if (mediaEl === wiredElement && audioCtx) {
@@ -122,7 +121,7 @@
 
       invL.gain.value = -1;
       invR.gain.value = -1;
-      vocalGain.gain.value = (state.vocalReduction / 100) * 0.85;
+      vocalGain.gain.value = (state.vocalReduction / 100) * 0.95;
 
       const lastFilter = filters[filters.length - 1];
       lastFilter.connect(splitter);
@@ -140,9 +139,9 @@
 
       merger.connect(audioCtx.destination);
       wiredElement = mediaEl;
-      console.log("[Cadence] Audio engine successfully hooked to player element.");
+      console.log("[Cadence] Audio engine successfully wired!");
     } catch (err) {
-      console.debug("[Cadence] Audio hook deferred or already connected:", err.message);
+      console.debug("[Cadence] Audio hook info:", err.message);
     }
   }
 
@@ -153,7 +152,7 @@
       });
     }
     if (vocalGain) {
-      const base = (state.vocalReduction / 100) * 0.85;
+      const base = (state.vocalReduction / 100) * 0.95;
       const spatialBoost = state.spatialWidth ? 0.2 : 0;
       vocalGain.gain.value = Math.min(1, base + spatialBoost);
     }
@@ -349,7 +348,6 @@
     openCadenceModal
   );
 
-  // Sync audio engine with Spicetify player events
   if (window.Spicetify?.Player) {
     Spicetify.Player.addEventListener("songchange", () => {
       setTimeout(initAudioEngine, 500);
