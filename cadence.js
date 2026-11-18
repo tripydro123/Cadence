@@ -1,5 +1,191 @@
-function mountAppleShellElements() {
-    // Auto-collapse Your Library to icon-only mode when 68px Apple Rail is enabled
+// Cadence v3.5.1 — Complete Apple Music Desktop Replication, 3-Wheel Studio & 5-Layer AdBlocker
+// Author: tripydro123
+
+(function CadenceStudio() {
+  if (!window.Spicetify || !Spicetify.PopupModal || !Spicetify.Topbar) {
+    setTimeout(CadenceStudio, 300);
+    return;
+  }
+
+  const STORAGE_KEY = "cadence_v35_apple_music_full";
+  const INSTALL_WIN = "iwr -useb https://raw.githubusercontent.com/tripydro123/cadence/main/install.ps1 | iex";
+  const INSTALL_UNIX = "curl -fsSL https://raw.githubusercontent.com/tripydro123/cadence/main/install.sh | sh";
+
+  const PRESETS = [
+    { name: "Apple Music Dark", accent: "#fa2d48", surface: "#1f1f21", text: "#ffffff", isWhiteBtn: false },
+    { name: "Apple Music White", accent: "#fa2d48", surface: "#ffffff", text: "#1d1d1f", isWhiteBtn: true },
+    { name: "OLED Pure Black", accent: "#ff375f", surface: "#000000", text: "#ffffff", isWhiteBtn: false },
+    { name: "iOS Warm White", accent: "#ff2d55", surface: "#f9f9fb", text: "#1d1d1f", isWhiteBtn: true }
+  ];
+
+  const defaultState = {
+    accentHex: "#fa2d48",
+    surfaceHex: "#1f1f21",
+    textHex: "#ffffff",
+    autoTextContrast: true,
+    borderRadius: 12,
+    topPlayerLayout: true,
+    appleRail68: true,
+    artistSplitLayout: true,
+    ambientBackdrop: true,
+    floatingPlayer: true,
+    squircleHighlight: true,
+    editorialHeaders: true,
+    compactSidebar: true,
+    adBlock: true,
+    lyricBlurInactive: true,
+    lyricTheater: false,
+    lyricGlow: true,
+    lyricScale: 1.06
+  };
+
+  let state = Object.assign({}, defaultState, JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"));
+  let blockedAdCount = 0;
+  let savedVolumeBeforeAd = null;
+  let adHooksInstalled = false;
+
+  function saveState() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  // ============================================================================
+  // 5-LAYER SPOTIFY ADBLOCK ENGINE
+  // ============================================================================
+  function disableAllAdManagers() {
+    if (!state.adBlock) return;
+    try {
+      const adManagers = Spicetify.Platform?.AdManagers;
+      if (adManagers && typeof adManagers === "object") {
+        Object.keys(adManagers).forEach((key) => {
+          const mgr = adManagers[key];
+          if (mgr && typeof mgr.disable === "function") {
+            mgr.disable().catch(() => {});
+          }
+          if (mgr && typeof mgr === "object" && "isNewAdsNpuEnabled" in mgr) {
+            mgr.isNewAdsNpuEnabled = false;
+          }
+        });
+      }
+    } catch (e) {}
+
+    try {
+      if (Spicetify.CosmosAsync) {
+        const slots = ["audio", "billboard", "leaderboard", "sponsored-playlist", "hpto", "stream", "watchnow"];
+        slots.forEach((slot) => {
+          Spicetify.CosmosAsync.post(`sp://ads/v1/slots/${slot}/disable`).catch(() => {});
+          Spicetify.CosmosAsync.del(`sp://ads/v1/ads/${slot}`).catch(() => {});
+        });
+      }
+    } catch (e) {}
+
+    try {
+      const productState =
+        Spicetify.Platform?.UserAPI?._product_state ||
+        Spicetify.Platform?.ProductStateAPI?.productStateApi;
+      if (productState && typeof productState.putValues === "function") {
+        productState.putValues({
+          pairs: {
+            ads: "0",
+            catalogue: "premium",
+            product: "premium",
+            type: "premium"
+          }
+        }).catch(() => {});
+      }
+    } catch (e) {}
+  }
+
+  function installAdNetworkHooks() {
+    if (adHooksInstalled) return;
+    adHooksInstalled = true;
+
+    const isAdUrl = (url) => {
+      if (typeof url !== "string") return false;
+      const lower = url.toLowerCase();
+      return (
+        lower.startsWith("sp://ads/") ||
+        lower.startsWith("wg://ads/") ||
+        lower.includes("/ads/v1/") ||
+        lower.includes("/ads/v2/") ||
+        lower.includes("/ad-logic/") ||
+        lower.includes("adevent") ||
+        lower.includes("doubleclick.net") ||
+        lower.includes("googlesyndication.com")
+      );
+    };
+
+    if (Spicetify.CosmosAsync) {
+      ["get", "post", "put", "del", "head"].forEach((method) => {
+        if (typeof Spicetify.CosmosAsync[method] === "function") {
+          const orig = Spicetify.CosmosAsync[method].bind(Spicetify.CosmosAsync);
+          Spicetify.CosmosAsync[method] = function (url, ...args) {
+            if (state.adBlock && isAdUrl(url)) {
+              blockedAdCount++;
+              return Promise.resolve({});
+            }
+            return orig(url, ...args);
+          };
+        }
+      });
+    }
+
+    if (typeof window.fetch === "function") {
+      const origFetch = window.fetch.bind(window);
+      window.fetch = function (resource, init) {
+        const reqUrl = typeof resource === "string" ? resource : resource?.url || "";
+        if (state.adBlock && isAdUrl(reqUrl)) {
+          blockedAdCount++;
+          return Promise.resolve(
+            new Response("{}", {
+              status: 200,
+              headers: { "Content-Type": "application/json" }
+            })
+          );
+        }
+        return origFetch(resource, init);
+      };
+    }
+  }
+
+  function guardAgainstAudioAd() {
+    if (!state.adBlock || !Spicetify.Player) return;
+    const item = Spicetify.Player.data?.item;
+    if (!item) return;
+
+    const isAdTrack =
+      item.uri?.startsWith("spotify:ad:") ||
+      item.type === "ad" ||
+      item.provider === "ad" ||
+      item.metadata?.is_advertisement === "true";
+
+    if (isAdTrack) {
+      blockedAdCount++;
+      if (savedVolumeBeforeAd === null && typeof Spicetify.Player.getVolume === "function") {
+        savedVolumeBeforeAd = Spicetify.Player.getVolume();
+      }
+      if (typeof Spicetify.Player.setVolume === "function") {
+        Spicetify.Player.setVolume(0);
+      }
+      const duration = Spicetify.Player.getDuration?.() || 0;
+      if (duration > 0 && typeof Spicetify.Player.seek === "function") {
+        Spicetify.Player.seek(duration);
+      }
+      if (typeof Spicetify.Player.next === "function") {
+        Spicetify.Player.next();
+      }
+      disableAllAdManagers();
+    } else if (savedVolumeBeforeAd !== null) {
+      if (typeof Spicetify.Player.setVolume === "function") {
+        Spicetify.Player.setVolume(savedVolumeBeforeAd);
+      }
+      savedVolumeBeforeAd = null;
+    }
+  }
+
+  // ============================================================================
+  // APPLE MUSIC SHELL INJECTOR (68px RAIL LOGO, GREEN BOOKMARK & QUEUE TABS)
+  // ============================================================================
+  function mountAppleShellElements() {
     if (state.appleRail68) {
       const collapseBtn = document.querySelector('button[aria-label="Collapse Your Library"]');
       if (collapseBtn) collapseBtn.click();
@@ -28,7 +214,11 @@ function mountAppleShellElements() {
       }
     }
 
-    // Mount inside the inner panel container (not Root__right-sidebar directly) so it stays horizontal
+    const existingTabBar = document.getElementById("cadence-queue-segmented-tabs");
+    if (existingTabBar && existingTabBar.parentElement?.classList.contains("Root__right-sidebar")) {
+      existingTabBar.remove();
+    }
+
     const queueInnerPanel =
       document.querySelector(".Root__right-sidebar aside") ||
       document.querySelector(".Root__right-sidebar .main-nowPlayingView-content") ||
@@ -53,3 +243,643 @@ function mountAppleShellElements() {
       queueInnerPanel.prepend(tabBar);
     }
   }
+
+  // ============================================================================
+  // COLOR & UI HELPERS
+  // ============================================================================
+  function hexToHsv(hex) {
+    const clean = hex.replace("#", "");
+    const r = parseInt(clean.substring(0, 2), 16) / 255;
+    const g = parseInt(clean.substring(2, 4), 16) / 255;
+    const b = parseInt(clean.substring(4, 6), 16) / 255;
+
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const d = max - min;
+    let h = 0;
+    const s = max === 0 ? 0 : d / max;
+    const v = max;
+
+    if (d !== 0) {
+      if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+      else if (max === g) h = ((b - r) / d + 2) / 6;
+      else h = ((r - g) / d + 4) / 6;
+    }
+    return { h: h * 360, s, v };
+  }
+
+  function hsvToHex(h, s, v) {
+    const c = v * s;
+    const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+    const m = v - c;
+    let r = 0, g = 0, b = 0;
+
+    if (h >= 0 && h < 60) { r = c; g = x; b = 0; }
+    else if (h >= 60 && h < 120) { r = x; g = c; b = 0; }
+    else if (h >= 120 && h < 180) { r = 0; g = c; b = x; }
+    else if (h >= 180 && h < 240) { r = 0; g = x; b = c; }
+    else if (h >= 240 && h < 300) { r = x; g = 0; b = c; }
+    else { r = c; g = 0; b = x; }
+
+    const toHex = (n) => Math.round((n + m) * 255).toString(16).padStart(2, "0");
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+  }
+
+  function shiftHex(hex, amount) {
+    const clean = hex.replace("#", "");
+    const clamp = (n) => Math.max(0, Math.min(255, n));
+    const r = clamp(parseInt(clean.substring(0, 2), 16) + amount);
+    const g = clamp(parseInt(clean.substring(2, 4), 16) + amount);
+    const b = clamp(parseInt(clean.substring(4, 6), 16) + amount);
+    return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+  }
+
+  function getLuminance(hex) {
+    const clean = hex.replace("#", "");
+    const r = parseInt(clean.substring(0, 2), 16);
+    const g = parseInt(clean.substring(2, 4), 16);
+    const b = parseInt(clean.substring(4, 6), 16);
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  }
+
+  function hexToRgba(hex, alpha) {
+    const clean = hex.replace("#", "");
+    const r = parseInt(clean.substring(0, 2), 16);
+    const g = parseInt(clean.substring(2, 4), 16);
+    const b = parseInt(clean.substring(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+
+  function stripInlineHeaderShades() {
+    const targets = document.querySelectorAll(
+      ".main-home-homeHeader, .main-home-filterChipsSection, .main-topBar-overlay, .main-entityHeader-backgroundColor, .under-main-view"
+    );
+    targets.forEach((el) => {
+      el.style.setProperty("background", "transparent", "important");
+      el.style.setProperty("background-color", "transparent", "important");
+      el.style.setProperty("background-image", "none", "important");
+    });
+  }
+
+  async function copyToClipboard(text, btnEl, defaultLabel) {
+    let copied = false;
+    try {
+      if (window.Spicetify?.Platform?.ClipboardAPI?.copy) {
+        await Spicetify.Platform.ClipboardAPI.copy(text);
+        copied = true;
+      } else if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        copied = true;
+      }
+    } catch (e) {
+      copied = false;
+    }
+
+    if (!copied) {
+      const temp = document.createElement("textarea");
+      temp.value = text;
+      temp.style.position = "fixed";
+      temp.style.opacity = "0";
+      document.body.appendChild(temp);
+      temp.select();
+      copied = document.execCommand("copy");
+      document.body.removeChild(temp);
+    }
+
+    if (copied) {
+      btnEl.textContent = "Copied!";
+      if (window.Spicetify?.showNotification) {
+        Spicetify.showNotification("Copied to clipboard!");
+      }
+      setTimeout(() => {
+        btnEl.textContent = defaultLabel;
+      }, 2000);
+    }
+  }
+
+  function ensureBackdropLayer() {
+    let layer = document.getElementById("cadence-art-backdrop");
+    if (!layer) {
+      layer = document.createElement("div");
+      layer.id = "cadence-art-backdrop";
+      layer.innerHTML = `
+        <div class="cadence-backdrop-orb orb-a"></div>
+        <div class="cadence-backdrop-orb orb-b"></div>
+      `;
+      document.body.prepend(layer);
+    }
+    return layer;
+  }
+
+  function updateBackdropArt() {
+    const layer = ensureBackdropLayer();
+    layer.classList.toggle("cadence-hidden", !state.ambientBackdrop);
+    if (!state.ambientBackdrop) return;
+
+    const item = Spicetify.Player?.data?.item;
+    const images = item?.album?.images || item?.images || [];
+    const imgUrl = images[0]?.url || item?.metadata?.image_xlarge_url || item?.metadata?.image_url || "";
+
+    if (imgUrl) {
+      const resolvedUrl = imgUrl.startsWith("spotify:image:")
+        ? `https://i.scdn.co/image/${imgUrl.replace("spotify:image:", "")}`
+        : imgUrl;
+      layer.querySelector(".orb-a").style.backgroundImage = `url("${resolvedUrl}")`;
+      layer.querySelector(".orb-b").style.backgroundImage = `url("${resolvedUrl}")`;
+    }
+  }
+
+  function applyVisualPrefs() {
+    const root = document.documentElement;
+    const isLight = getLuminance(state.surfaceHex) > 0.58;
+
+    root.style.colorScheme = isLight ? "light" : "dark";
+
+    if (state.autoTextContrast) {
+      state.textHex = isLight ? "#1d1d1f" : "#ffffff";
+    }
+
+    const sidebarBg = isLight ? shiftHex(state.surfaceHex, -10) : shiftHex(state.surfaceHex, 7);
+    const elevatedBg = isLight ? "#ffffff" : shiftHex(state.surfaceHex, 13);
+    const cardBg = isLight ? shiftHex(state.surfaceHex, -6) : shiftHex(state.surfaceHex, 9);
+    const lcdBg = isLight ? "rgba(0, 0, 0, 0.045)" : "rgba(255, 255, 255, 0.08)";
+    const rowAlt = isLight ? "rgba(0, 0, 0, 0.025)" : "rgba(255, 255, 255, 0.035)";
+    const hoverBg = isLight ? "rgba(0, 0, 0, 0.05)" : "rgba(255, 255, 255, 0.08)";
+    const pressBg = isLight ? "rgba(0, 0, 0, 0.09)" : "rgba(255, 255, 255, 0.13)";
+    const tintedBg = isLight ? "rgba(0, 0, 0, 0.05)" : "rgba(255, 255, 255, 0.07)";
+    const borderCol = isLight ? "rgba(0, 0, 0, 0.08)" : "rgba(255, 255, 255, 0.1)";
+    const subtextCol = isLight ? "rgba(29, 29, 31, 0.6)" : "#a1a1a6";
+
+    root.style.setProperty("--cadence-accent", state.accentHex);
+    root.style.setProperty("--cadence-accent-soft", hexToRgba(state.accentHex, isLight ? 0.12 : 0.18));
+    root.style.setProperty("--cadence-surface", state.surfaceHex);
+    root.style.setProperty("--cadence-sidebar", sidebarBg);
+    root.style.setProperty("--cadence-elevated", elevatedBg);
+    root.style.setProperty("--cadence-card", cardBg);
+    root.style.setProperty("--cadence-lcd-bg", lcdBg);
+    root.style.setProperty("--cadence-row-alt", rowAlt);
+    root.style.setProperty("--cadence-surface-hover", hoverBg);
+    root.style.setProperty("--cadence-surface-press", pressBg);
+    root.style.setProperty("--cadence-tinted", tintedBg);
+    root.style.setProperty("--cadence-border", borderCol);
+    root.style.setProperty("--cadence-text", state.textHex);
+    root.style.setProperty("--cadence-subtext", subtextCol);
+    root.style.setProperty("--cadence-radius", `${state.borderRadius}px`);
+    root.style.setProperty("--cadence-lyric-scale", `${state.lyricScale}`);
+
+    root.style.setProperty("--spice-button", state.accentHex);
+    root.style.setProperty("--spice-button-active", state.accentHex);
+    root.style.setProperty("--spice-notification", state.accentHex);
+    root.style.setProperty("--spice-main", state.surfaceHex);
+    root.style.setProperty("--spice-sidebar", sidebarBg);
+    root.style.setProperty("--spice-player", elevatedBg);
+    root.style.setProperty("--spice-card", cardBg);
+    root.style.setProperty("--spice-selected-row", hoverBg);
+    root.style.setProperty("--spice-misc", tintedBg);
+    root.style.setProperty("--spice-text", state.textHex);
+    root.style.setProperty("--spice-subtext", subtextCol);
+
+    document.body.classList.toggle("cadence-light-mode", isLight);
+    document.body.classList.toggle("cadence-top-player", !!state.topPlayerLayout);
+    document.body.classList.toggle("cadence-apple-rail", !!state.appleRail68);
+    document.body.classList.toggle("cadence-artist-split", !!state.artistSplitLayout);
+    document.body.classList.toggle("cadence-adblock-active", !!state.adBlock);
+    document.body.classList.toggle("cadence-floating-player", !!state.floatingPlayer);
+    document.body.classList.toggle("cadence-squircle-cards", !!state.squircleHighlight);
+    document.body.classList.toggle("cadence-editorial-headers", !!state.editorialHeaders);
+    document.body.classList.toggle("cadence-compact-ui", !!state.compactSidebar);
+    document.body.classList.toggle("cadence-lyric-blur", !!state.lyricBlurInactive);
+    document.body.classList.toggle("cadence-lyric-theater", !!state.lyricTheater);
+    document.body.classList.toggle("cadence-lyric-glow", !!state.lyricGlow);
+
+    if (state.adBlock) {
+      installAdNetworkHooks();
+      disableAllAdManagers();
+    }
+
+    mountAppleShellElements();
+    stripInlineHeaderShades();
+    updateBackdropArt();
+  }
+
+  function mountCircularWheel(containerEl, initialHex, onChange) {
+    let hsv = hexToHsv(initialHex);
+    const size = 116;
+    const radius = size / 2;
+
+    containerEl.innerHTML = `
+      <div class="cadence-wheel-box" style="width:${size}px;height:${size}px;">
+        <canvas width="${size}" height="${size}" class="cadence-wheel-canvas" style="width:${size}px;height:${size}px;"></canvas>
+        <div class="cadence-wheel-cursor"></div>
+      </div>
+      <div class="cadence-brightness-row">
+        <span>Shade</span>
+        <input type="range" class="cadence-val-slider" min="0" max="1" step="0.01" value="${hsv.v}" />
+      </div>
+      <div class="cadence-hex-badge">${initialHex.toUpperCase()}</div>
+    `;
+
+    const canvas = containerEl.querySelector("canvas");
+    const ctx = canvas.getContext("2d");
+    const cursor = containerEl.querySelector(".cadence-wheel-cursor");
+    const valSlider = containerEl.querySelector(".cadence-val-slider");
+    const hexBadge = containerEl.querySelector(".cadence-hex-badge");
+
+    function renderWheel() {
+      const img = ctx.createImageData(size, size);
+      const data = img.data;
+
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          const dx = x - radius;
+          const dy = y - radius;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const idx = (y * size + x) * 4;
+
+          if (dist <= radius) {
+            const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+            const hue = (angle + 360) % 360;
+            const sat = Math.min(1, dist / radius);
+            const hex = hsvToHex(hue, sat, hsv.v);
+            data[idx] = parseInt(hex.slice(1, 3), 16);
+            data[idx + 1] = parseInt(hex.slice(3, 5), 16);
+            data[idx + 2] = parseInt(hex.slice(5, 7), 16);
+            data[idx + 3] = 255;
+          } else {
+            data[idx + 3] = 0;
+          }
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+    }
+
+    function updateCursorPosition() {
+      const rad = (hsv.h * Math.PI) / 180;
+      const dist = hsv.s * (radius - 6);
+      const cx = radius + Math.cos(rad) * dist;
+      const cy = radius + Math.sin(rad) * dist;
+      cursor.style.left = `${cx}px`;
+      cursor.style.top = `${cy}px`;
+      const hex = hsvToHex(hsv.h, hsv.s, hsv.v);
+      cursor.style.backgroundColor = hex;
+      hexBadge.textContent = hex.toUpperCase();
+    }
+
+    function pickAtPointer(e) {
+      const rect = canvas.getBoundingClientRect();
+      const dx = e.clientX - rect.left - radius;
+      const dy = e.clientY - rect.top - radius;
+      const dist = Math.min(radius, Math.sqrt(dx * dx + dy * dy));
+      const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+      hsv.h = (angle + 360) % 360;
+      hsv.s = dist / radius;
+      updateCursorPosition();
+      onChange(hsvToHex(hsv.h, hsv.s, hsv.v));
+    }
+
+    let dragging = false;
+    canvas.addEventListener("pointerdown", (e) => {
+      dragging = true;
+      canvas.setPointerCapture(e.pointerId);
+      pickAtPointer(e);
+    });
+    canvas.addEventListener("pointermove", (e) => {
+      if (dragging) pickAtPointer(e);
+    });
+    canvas.addEventListener("pointerup", (e) => {
+      dragging = false;
+      canvas.releasePointerCapture(e.pointerId);
+    });
+
+    valSlider.addEventListener("input", (e) => {
+      hsv.v = Number(e.target.value);
+      renderWheel();
+      updateCursorPosition();
+      onChange(hsvToHex(hsv.h, hsv.s, hsv.v));
+    });
+
+    renderWheel();
+    updateCursorPosition();
+
+    return {
+      setHex(newHex) {
+        hsv = hexToHsv(newHex);
+        valSlider.value = hsv.v;
+        renderWheel();
+        updateCursorPosition();
+      }
+    };
+  }
+
+  function toggleCadenceModal() {
+    if (document.querySelector(".cadence-studio-wrap")) {
+      Spicetify.PopupModal.hide();
+      return;
+    }
+    openCadenceModal();
+  }
+
+  function openCadenceModal() {
+    const container = document.createElement("div");
+    container.className = "cadence-studio-wrap";
+
+    container.innerHTML = `
+      <div class="cadence-tabs">
+        <button class="cadence-tab-btn active" data-tab="appearance">Themes & Color Wheels</button>
+        <button class="cadence-tab-btn" data-tab="layout">Apple Music & AdBlock</button>
+        <button class="cadence-tab-btn" data-tab="lyrics">Karaoke Lyrics</button>
+        <button class="cadence-tab-btn" data-tab="share">Share Theme</button>
+      </div>
+
+      <div class="cadence-panel active" data-panel="appearance">
+        <div class="cadence-preset-grid">
+          ${PRESETS.map(
+            (p, idx) => `
+            <button class="cadence-preset-btn ${p.isWhiteBtn ? "cadence-white-theme-btn" : ""}" data-preset="${idx}">
+              <span class="cadence-swatch" style="background:${p.surface};border:2px solid ${p.accent};"></span>
+              <span>${p.name}</span>
+            </button>`
+          ).join("")}
+        </div>
+
+        <div class="cadence-wheels-grid-3">
+          <div class="cadence-wheel-card">
+            <div class="cadence-wheel-title">Accent Wheel</div>
+            <div id="cadence-accent-wheel"></div>
+          </div>
+          <div class="cadence-wheel-card">
+            <div class="cadence-wheel-title">Background Wheel</div>
+            <div id="cadence-bg-wheel"></div>
+          </div>
+          <div class="cadence-wheel-card">
+            <div class="cadence-wheel-title">Text Color Wheel</div>
+            <div id="cadence-text-wheel"></div>
+          </div>
+        </div>
+
+        <div class="cadence-row">
+          <span>Auto-Contrast Text (Prevents Invisible Text on White BG)</span>
+          <input type="checkbox" id="cadence-autotext-toggle" ${state.autoTextContrast ? "checked" : ""} />
+        </div>
+      </div>
+
+      <div class="cadence-panel" data-panel="layout">
+        <div class="cadence-row">
+          <div>
+            <div style="font-weight:700;">5-Layer Full AdBlocker (Audio, Video, Banners & Upsells)</div>
+            <div style="font-size:11px;opacity:0.75;">Status: ${state.adBlock ? `Active (${blockedAdCount} ad calls blocked this session)` : "Disabled"}</div>
+          </div>
+          <input type="checkbox" id="cadence-adblock-toggle" ${state.adBlock ? "checked" : ""} />
+        </div>
+        <div class="cadence-row">
+          <span>56px Top LCD Transport Bar (440×42px Capsule)</span>
+          <input type="checkbox" id="cadence-topplayer-toggle" ${state.topPlayerLayout ? "checked" : ""} />
+        </div>
+        <div class="cadence-row">
+          <span>68px Apple Icon Left Rail & Green Bookmark Badge</span>
+          <input type="checkbox" id="cadence-applerail-toggle" ${state.appleRail68 ? "checked" : ""} />
+        </div>
+        <div class="cadence-row">
+          <span>460px Artist Hero & Two-Column Latest Release + Top Songs</span>
+          <input type="checkbox" id="cadence-artistsplit-toggle" ${state.artistSplitLayout ? "checked" : ""} />
+        </div>
+        <div class="cadence-row">
+          <span>Dynamic Album-Art Ambient Glow Through Sidebars</span>
+          <input type="checkbox" id="cadence-backdrop-toggle" ${state.ambientBackdrop ? "checked" : ""} />
+        </div>
+        <div class="cadence-row">
+          <span>Card Corner Radius (<span id="cadence-radius-val">${state.borderRadius}</span>px)</span>
+          <input type="range" id="cadence-radius-slider" min="6" max="20" step="2" value="${state.borderRadius}" />
+        </div>
+      </div>
+
+      <div class="cadence-panel" data-panel="lyrics">
+        <div class="cadence-row">
+          <span>Apple Music Progressive Blur on Inactive Lyric Lines</span>
+          <input type="checkbox" id="cadence-lyric-blur-toggle" ${state.lyricBlurInactive ? "checked" : ""} />
+        </div>
+        <div class="cadence-row">
+          <span>Active Lyric Zoom Scale (<span id="cadence-scale-val">${state.lyricScale.toFixed(2)}</span>x)</span>
+          <input type="range" id="cadence-scale-slider" min="1.0" max="1.35" step="0.02" value="${state.lyricScale}" />
+        </div>
+        <div class="cadence-row">
+          <span>Soft White Glow on Active Lyric Line</span>
+          <input type="checkbox" id="cadence-lyric-glow-toggle" ${state.lyricGlow ? "checked" : ""} />
+        </div>
+        <div class="cadence-row">
+          <span>Theater Dimming (Sidebars Fade During Lyrics)</span>
+          <input type="checkbox" id="cadence-theater-toggle" ${state.lyricTheater ? "checked" : ""} />
+        </div>
+      </div>
+
+      <div class="cadence-panel" data-panel="share">
+        <div class="cadence-row" style="flex-direction:column;align-items:stretch;gap:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-weight:600;font-size:13px;">Windows (PowerShell)</span>
+            <button id="cadence-copy-win" class="cadence-tab-btn active" style="padding:5px 12px;">Copy</button>
+          </div>
+          <code class="cadence-code-box">${INSTALL_WIN}</code>
+        </div>
+
+        <div class="cadence-row" style="flex-direction:column;align-items:stretch;gap:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-weight:600;font-size:13px;">macOS & Linux (Terminal)</span>
+            <button id="cadence-copy-unix" class="cadence-tab-btn active" style="padding:5px 12px;">Copy</button>
+          </div>
+          <code class="cadence-code-box">${INSTALL_UNIX}</code>
+        </div>
+      </div>
+    `;
+
+    const accentWheelCtrl = mountCircularWheel(
+      container.querySelector("#cadence-accent-wheel"),
+      state.accentHex,
+      (newHex) => {
+        state.accentHex = newHex;
+        applyVisualPrefs();
+        saveState();
+      }
+    );
+
+    const bgWheelCtrl = mountCircularWheel(
+      container.querySelector("#cadence-bg-wheel"),
+      state.surfaceHex,
+      (newHex) => {
+        state.surfaceHex = newHex;
+        applyVisualPrefs();
+        if (state.autoTextContrast) {
+          textWheelCtrl.setHex(state.textHex);
+        }
+        saveState();
+      }
+    );
+
+    const textWheelCtrl = mountCircularWheel(
+      container.querySelector("#cadence-text-wheel"),
+      state.textHex,
+      (newHex) => {
+        state.autoTextContrast = false;
+        container.querySelector("#cadence-autotext-toggle").checked = false;
+        state.textHex = newHex;
+        applyVisualPrefs();
+        saveState();
+      }
+    );
+
+    container.querySelectorAll(".cadence-tab-btn[data-tab]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        container.querySelectorAll(".cadence-tab-btn[data-tab]").forEach((b) => b.classList.remove("active"));
+        container.querySelectorAll(".cadence-panel").forEach((p) => p.classList.remove("active"));
+        btn.classList.add("active");
+        container.querySelector(`[data-panel="${btn.dataset.tab}"]`).classList.add("active");
+      });
+    });
+
+    container.querySelectorAll(".cadence-preset-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const preset = PRESETS[Number(btn.dataset.preset)];
+        if (!preset) return;
+        state.accentHex = preset.accent;
+        state.surfaceHex = preset.surface;
+        state.textHex = preset.text;
+        state.autoTextContrast = true;
+        container.querySelector("#cadence-autotext-toggle").checked = true;
+        accentWheelCtrl.setHex(preset.accent);
+        bgWheelCtrl.setHex(preset.surface);
+        textWheelCtrl.setHex(preset.text);
+        applyVisualPrefs();
+        saveState();
+      });
+    });
+
+    container.querySelector("#cadence-autotext-toggle").addEventListener("change", (e) => {
+      state.autoTextContrast = e.target.checked;
+      applyVisualPrefs();
+      textWheelCtrl.setHex(state.textHex);
+      saveState();
+    });
+
+    container.querySelector("#cadence-topplayer-toggle").addEventListener("change", (e) => {
+      state.topPlayerLayout = e.target.checked;
+      applyVisualPrefs();
+      saveState();
+    });
+
+    container.querySelector("#cadence-applerail-toggle").addEventListener("change", (e) => {
+      state.appleRail68 = e.target.checked;
+      applyVisualPrefs();
+      saveState();
+    });
+
+    container.querySelector("#cadence-artistsplit-toggle").addEventListener("change", (e) => {
+      state.artistSplitLayout = e.target.checked;
+      applyVisualPrefs();
+      saveState();
+    });
+
+    container.querySelector("#cadence-adblock-toggle").addEventListener("change", (e) => {
+      state.adBlock = e.target.checked;
+      applyVisualPrefs();
+      saveState();
+    });
+
+    container.querySelector("#cadence-backdrop-toggle").addEventListener("change", (e) => {
+      state.ambientBackdrop = e.target.checked;
+      applyVisualPrefs();
+      saveState();
+    });
+
+    container.querySelector("#cadence-radius-slider").addEventListener("input", (e) => {
+      state.borderRadius = Number(e.target.value);
+      container.querySelector("#cadence-radius-val").textContent = state.borderRadius;
+      applyVisualPrefs();
+      saveState();
+    });
+
+    container.querySelector("#cadence-lyric-blur-toggle").addEventListener("change", (e) => {
+      state.lyricBlurInactive = e.target.checked;
+      applyVisualPrefs();
+      saveState();
+    });
+
+    container.querySelector("#cadence-scale-slider").addEventListener("input", (e) => {
+      state.lyricScale = Number(e.target.value);
+      container.querySelector("#cadence-scale-val").textContent = state.lyricScale.toFixed(2);
+      applyVisualPrefs();
+      saveState();
+    });
+
+    container.querySelector("#cadence-lyric-glow-toggle").addEventListener("change", (e) => {
+      state.lyricGlow = e.target.checked;
+      applyVisualPrefs();
+      saveState();
+    });
+
+    container.querySelector("#cadence-theater-toggle").addEventListener("change", (e) => {
+      state.lyricTheater = e.target.checked;
+      applyVisualPrefs();
+      saveState();
+    });
+
+    const copyWinBtn = container.querySelector("#cadence-copy-win");
+    copyWinBtn.addEventListener("click", () => copyToClipboard(INSTALL_WIN, copyWinBtn, "Copy"));
+
+    const copyUnixBtn = container.querySelector("#cadence-copy-unix");
+    copyUnixBtn.addEventListener("click", () => copyToClipboard(INSTALL_UNIX, copyUnixBtn, "Copy"));
+
+    Spicetify.PopupModal.display({
+      title: "Cadence v3.5.1 — Apple Music Studio",
+      content: container,
+      isLarge: true
+    });
+  }
+
+  window.addEventListener("keydown", (e) => {
+    if (e.altKey && e.code === "KeyC") {
+      e.preventDefault();
+      toggleCadenceModal();
+    }
+  });
+
+  document.addEventListener("click", () => {
+    setTimeout(mountAppleShellElements, 200);
+  });
+
+  if (window.Spicetify?.Player) {
+    Spicetify.Player.addEventListener("songchange", () => {
+      guardAgainstAudioAd();
+      setTimeout(() => {
+        mountAppleShellElements();
+        updateBackdropArt();
+      }, 250);
+    });
+  }
+
+  if (window.Spicetify?.Platform?.History) {
+    Spicetify.Platform.History.listen(() => {
+      disableAllAdManagers();
+      setTimeout(() => {
+        mountAppleShellElements();
+        stripInlineHeaderShades();
+      }, 250);
+    });
+  }
+
+  new Spicetify.Topbar.Button(
+    "Cadence Studio (Alt+C)",
+    `<svg role="img" height="16" width="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 2.5a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9zm0 2a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/></svg>`,
+    toggleCadenceModal
+  );
+
+  applyVisualPrefs();
+  setTimeout(disableAllAdManagers, 1500);
+  setInterval(() => {
+    disableAllAdManagers();
+    mountAppleShellElements();
+  }, 15000);
+  setTimeout(() => {
+    mountAppleShellElements();
+    stripInlineHeaderShades();
+  }, 600);
+  console.log("[Cadence v3.5.1] Full Apple Music UI & 5-Layer AdBlocker active.");
+})();
