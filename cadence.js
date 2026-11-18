@@ -117,26 +117,11 @@
       let response = await cache.match(MODEL_URL);
 
       if (!response) {
-        statusEl.textContent = "Downloading AI Weights (0% of 166 MB)...";
+        statusEl.textContent = "Downloading AI Model Weights (166 MB)...";
         const fetchRes = await fetch(MODEL_URL);
         if (!fetchRes.ok) throw new Error(`HTTP ${fetchRes.status}`);
 
-        const contentLength = Number(fetchRes.headers.get("content-length")) || 174063616;
-        const reader = fetchRes.body.getReader();
-        let received = 0;
-        const chunks = [];
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          chunks.push(value);
-          received += value.length;
-          const pct = Math.min(100, Math.round((received / contentLength) * 100));
-          const mb = (received / (1024 * 1024)).toFixed(1);
-          statusEl.textContent = `Downloading AI Weights: ${pct}% (${mb} / 166 MB)...`;
-        }
-
-        const blob = new Blob(chunks, { type: "application/octet-stream" });
+        const blob = await fetchRes.blob();
         const cacheResponse = new Response(blob, {
           headers: { "Content-Type": "application/octet-stream" }
         });
@@ -146,9 +131,17 @@
 
       statusEl.textContent = "Initializing HTDemucs-FT ONNX Session...";
       const buffer = await response.arrayBuffer();
-      ortSession = await window.ort.InferenceSession.create(buffer, {
-        executionProviders: ["webgpu", "wasm"]
-      });
+
+      try {
+        ortSession = await window.ort.InferenceSession.create(buffer, {
+          executionProviders: ["webgpu", "wasm"]
+        });
+      } catch (e) {
+        console.warn("[Cadence] WebGPU provider failed, falling back to WASM:", e);
+        ortSession = await window.ort.InferenceSession.create(buffer, {
+          executionProviders: ["wasm"]
+        });
+      }
 
       state.aiEngineActive = true;
       saveState();
