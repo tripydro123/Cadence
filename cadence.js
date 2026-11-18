@@ -104,25 +104,17 @@
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
 
-  // Strip Spotify's hashed inline dark gradients on home header, shelf edges & window controls
+  // Safe one-pass header gradient cleaner (no MutationObserver loop)
   function stripInlineHeaderShades() {
-    const containers = document.querySelectorAll(".Root__main-view, .Root__globalNav");
-    containers.forEach((rootEl) => {
-      rootEl.querySelectorAll("[style]").forEach((el) => {
-        if (el.closest(".cadence-studio-wrap") || el.classList.contains("cadence-backdrop-orb")) return;
-        const inlineStyle = el.getAttribute("style") || "";
-        if (
-          inlineStyle.includes("gradient") ||
-          inlineStyle.includes("--home-header-color") ||
-          inlineStyle.includes("background-color")
-        ) {
-          if (!inlineStyle.includes("url(") && el.tagName !== "IMG") {
-            el.style.setProperty("background", "transparent", "important");
-            el.style.setProperty("background-color", "transparent", "important");
-            el.style.setProperty("background-image", "none", "important");
-          }
-        }
-      });
+    const targets = document.querySelectorAll(
+      ".main-home-homeHeader, .main-home-filterChipsSection, .main-topBar-overlay, .main-entityHeader-backgroundColor, .under-main-view"
+    );
+    targets.forEach((el) => {
+      if (el.dataset.cadenceCleaned === "1") return;
+      el.dataset.cadenceCleaned = "1";
+      el.style.setProperty("background", "transparent", "important");
+      el.style.setProperty("background-color", "transparent", "important");
+      el.style.setProperty("background-image", "none", "important");
     });
   }
 
@@ -197,6 +189,9 @@
   function applyVisualPrefs() {
     const root = document.documentElement;
     const isLight = getLuminance(state.surfaceHex) > 0.58;
+
+    // Switches Windows top-right caption buttons (-, [], X) between Light and Dark mode
+    root.style.colorScheme = isLight ? "light" : "dark";
 
     if (state.autoTextContrast) {
       state.textHex = isLight ? "#1d1d1f" : "#ffffff";
@@ -385,7 +380,7 @@
           ${PRESETS.map(
             (p, idx) => `
             <button class="cadence-preset-btn ${p.isWhiteBtn ? "cadence-white-theme-btn" : ""}" data-preset="${idx}">
-              <span class="cadence-swatch" style="background:${p.surface};border:2px solid ${p.accent};"></span>
+              <span class="cadence-swatch" style="background:${p.surface};border:2px solid${p.accent};"></span>
               <span>${p.name}</span>
             </button>`
           ).join("")}
@@ -623,10 +618,11 @@
     });
   }
 
-  const shadeObserver = new MutationObserver(() => {
-    stripInlineHeaderShades();
-  });
-  shadeObserver.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["style"] });
+  if (window.Spicetify?.Platform?.History) {
+    Spicetify.Platform.History.listen(() => {
+      setTimeout(stripInlineHeaderShades, 250);
+    });
+  }
 
   new Spicetify.Topbar.Button(
     "Cadence Studio (Alt+C)",
@@ -635,5 +631,6 @@
   );
 
   applyVisualPrefs();
+  setTimeout(stripInlineHeaderShades, 800);
   console.log("[Cadence v3.2] Clean Apple Music UI loaded.");
 })();
