@@ -1,70 +1,3 @@
-/* Cadence v3.5 — Complete Apple Music Desktop UI, Exact Dimensions & Full AdBlocker */
-:root {
-  --cadence-accent: #fa2d48;
-  --cadence-accent-soft: rgba(250, 45, 72, 0.16);
-  --cadence-surface: #1f1f21;
-  --cadence-sidebar: #262629;
-  --cadence-elevated: #2c2c2e;
-  --cadence-card: #28282b;
-  --cadence-lcd-bg: rgba(255, 255, 255, 0.08);
-  --cadence-row-alt: rgba(255, 255, 255, 0.035);
-  --cadence-surface-hover: rgba(255, 255, 255, 0.08);
-  --cadence-surface-press: rgba(255, 255, 255, 0.13);
-  --cadence-tinted: rgba(255, 255, 255, 0.07);
-  --cadence-border: rgba(255, 255, 255, 0.1);
-  --cadence-text: #ffffff;
-  --cadence-subtext: #a1a1a6;
-  --cadence-radius: 12px;
-  --cadence-lyric-scale: 1.06;
-}
-
-/* Override Spotify Encore Theme Variables Globally */
-:root,
-body,
-.encore-dark-theme,
-.encore-dark-theme .encore-base-set,
-.encore-dark-theme .encore-inverted-dark-set,
-.encore-dark-theme .encore-inverted-light-set,
-.encore-dark-theme .encore-over-media-set,
-.Root__main-view,
-.Root__nav-bar,
-.Root__right-sidebar,
-.Root__now-playing-bar,
-.Root__globalNav,
-.GenericModal,
-[role="dialog"] {
-  --background-base: var(--cadence-surface) !important;
-  --background-highlight: var(--cadence-surface-hover) !important;
-  --background-press: var(--cadence-surface-press) !important;
-  --background-elevated-base: var(--cadence-elevated) !important;
-  --background-elevated-highlight: var(--cadence-surface-hover) !important;
-  --background-elevated-press: var(--cadence-surface-press) !important;
-  --background-tinted-base: var(--cadence-tinted) !important;
-  --background-tinted-highlight: var(--cadence-surface-hover) !important;
-  --background-tinted-press: var(--cadence-surface-press) !important;
-  --text-base: var(--cadence-text) !important;
-  --text-subdued: var(--cadence-subtext) !important;
-  --text-bright-accent: var(--cadence-accent) !important;
-  --essential-base: var(--cadence-text) !important;
-  --essential-subdued: var(--cadence-subtext) !important;
-  --essential-bright-accent: var(--cadence-accent) !important;
-  --decorative-base: var(--cadence-text) !important;
-  --decorative-subdued: var(--cadence-border) !important;
-  --home-header-color: transparent !important;
-  color: var(--cadence-text) !important;
-}
-
-body,
-.Root__top-container,
-.Root__main-view,
-.main-view-container,
-.main-view-container__scroll-node,
-.os-content {
-  background-color: var(--cadence-surface) !important;
-  color: var(--cadence-text) !important;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif !important;
-}
-
 /* ==========================================================================
    1. 56px APPLE MUSIC TOP TRANSPORT BAR & 440x42px CENTER LCD CAPSULE
    ========================================================================== */
@@ -96,9 +29,11 @@ body.cadence-top-player .main-nowPlayingBar-nowPlayingBar {
   align-items: center !important;
   height: 56px !important;
   padding: 0 !important;
-  gap: 18px !important;
+  gap: 24px !important;
+  position: relative !important;
 }
 
+/* Left Transport Cluster with Proper Spacing from LCD Capsule */
 body.cadence-top-player .main-nowPlayingBar-center {
   grid-column: 1 !important;
   grid-row: 1 !important;
@@ -106,11 +41,12 @@ body.cadence-top-player .main-nowPlayingBar-center {
   width: auto !important;
   max-width: none !important;
   position: static !important;
+  padding-right: 4px !important;
 }
 
 body.cadence-top-player .player-controls__buttons {
   margin-bottom: 0 !important;
-  gap: 10px !important;
+  gap: 12px !important;
   align-items: center !important;
 }
 
@@ -132,6 +68,7 @@ body.cadence-top-player .main-nowPlayingBar-left {
   grid-column: 2 !important;
   grid-row: 1 !important;
   width: 440px !important;
+  min-width: 440px !important;
   height: 42px !important;
   background: var(--cadence-lcd-bg) !important;
   border: 1px solid var(--cadence-border) !important;
@@ -146,31 +83,52 @@ body.cadence-top-player .main-nowPlayingBar-left {
 
 body.cadence-top-player .main-nowPlayingWidget-nowPlaying {
   width: 100% !important;
+  height: 100% !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   position: relative !important;
 }
 
+/* 36px x 36px Cover Art Pinned Left Inside LCD Capsule */
 body.cadence-top-player .main-nowPlayingWidget-coverArt {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
   position: absolute !important;
   left: 0 !important;
   top: 50% !important;
   transform: translateY(-50%) !important;
+  width: 36px !important;
+  height: 36px !important;
   margin: 0 !important;
+  z-index: 2 !important;
 }
 
-/* 36px x 36px LCD Cover Thumbnail */
-body.cadence-top-player .main-nowPlayingWidget-coverArt .cover-art {
+body.cadence-top-player .main-nowPlayingWidget-coverArt .cover-art,
+body.cadence-top-player .main-nowPlayingWidget-coverArt img {
   width: 36px !important;
   height: 36px !important;
   border-radius: 5px !important;
+  display: block !important;
 }
 
+/* Centered Song Title & Artist Name Inside LCD Capsule */
 body.cadence-top-player .main-nowPlayingWidget-trackInfo {
-  text-align: center !important;
+  display: flex !important;
+  flex-direction: column !important;
   align-items: center !important;
-  padding: 0 42px !important;
+  justify-content: center !important;
+  text-align: center !important;
+  padding: 0 44px !important;
+  width: 100% !important;
+  margin: 0 auto !important;
+}
+
+body.cadence-top-player .main-nowPlayingWidget-trackName,
+body.cadence-top-player .main-nowPlayingWidget-artistName {
+  justify-content: center !important;
+  text-align: center !important;
   width: 100% !important;
 }
 
@@ -185,19 +143,23 @@ body.cadence-top-player .main-nowPlayingWidget-artistName a {
   color: var(--cadence-subtext) !important;
 }
 
-/* 2.5px Bottom Progress Scrubber Inside LCD Capsule */
-body.cadence-top-player .playback-bar {
-  position: absolute !important;
-  bottom: 0 !important;
-  left: calc(50% - 180px) !important;
-  width: 398px !important;
-  height: 4px !important;
-  z-index: 90 !important;
+/* Hide 0:07 / 1:55 Timestamps & Pin Scrubber Along Bottom Edge of LCD Capsule */
+body.cadence-top-player .playback-bar__progress-time-elapsed,
+body.cadence-top-player .main-playbackBarRemainingTime-container,
+body.cadence-top-player [data-testid="playback-position"],
+body.cadence-top-player [data-testid="playback-duration"] {
+  display: none !important;
 }
 
-body.cadence-top-player .playback-bar__progress-time-elapsed,
-body.cadence-top-player .main-playbackBarRemainingTime-container {
-  display: none !important;
+body.cadence-top-player .playback-bar {
+  position: absolute !important;
+  bottom: 7px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: 394px !important;
+  margin-left: 18px !important;
+  height: 4px !important;
+  z-index: 95 !important;
 }
 
 body.cadence-top-player .progress-bar {
@@ -206,6 +168,7 @@ body.cadence-top-player .progress-bar {
   --bg-color: rgba(128, 128, 135, 0.25) !important;
 }
 
+/* Right Cluster: Volume Slider First, Then Lyrics / Queue / Devices / Miniplayer */
 body.cadence-top-player .main-nowPlayingBar-right {
   grid-column: 3 !important;
   grid-row: 1 !important;
@@ -235,513 +198,4 @@ body.cadence-top-player .volume-bar {
 .Root__now-playing-bar button[data-active="true"] svg,
 .player-controls__buttons button[aria-checked="true"] svg {
   color: var(--cadence-accent) !important;
-}
-
-/* ==========================================================================
-   2. CLEAN HEADERS & TRANSLUCENT FROSTED SIDEBARS
-   ========================================================================== */
-.main-topBar-container,
-.main-topBar-background,
-.main-topBar-overlay,
-.main-home-homeHeader,
-.main-home-filterChipsSection,
-.main-home-filterChipsContainer,
-.under-main-view,
-.main-entityHeader-backgroundColor,
-.main-entityHeader-overlay,
-.main-actionBarBackground-background {
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
-  box-shadow: none !important;
-}
-
-.Root__globalNav {
-  background: color-mix(in srgb, var(--cadence-elevated) 86%, transparent) !important;
-  backdrop-filter: blur(28px) !important;
-  border-bottom: 1px solid var(--cadence-border) !important;
-}
-
-.Root__globalNav button svg,
-.main-topBar-container button svg {
-  color: var(--cadence-text) !important;
-  fill: currentColor !important;
-}
-
-.x-searchInput-searchInputInput,
-form[role="search"] input {
-  background-color: var(--cadence-tinted) !important;
-  color: var(--cadence-text) !important;
-  border: 1px solid var(--cadence-border) !important;
-  border-radius: 8px !important;
-}
-
-.Root__nav-bar,
-.main-yourLibraryX-entryPoints,
-.main-yourLibraryX-libraryContainer,
-.main-yourLibraryX-libraryRootlist {
-  background: color-mix(in srgb, var(--cadence-sidebar) 76%, transparent) !important;
-  backdrop-filter: blur(36px) saturate(175%) !important;
-  -webkit-backdrop-filter: blur(36px) saturate(175%) !important;
-  border-right: 1px solid var(--cadence-border) !important;
-  box-shadow: none !important;
-  color: var(--cadence-text) !important;
-}
-
-.Root__right-sidebar,
-.main-nowPlayingView-content,
-.main-nowPlayingView-section,
-aside[aria-label="Now playing view"] {
-  background: color-mix(in srgb, var(--cadence-sidebar) 78%, transparent) !important;
-  backdrop-filter: blur(36px) saturate(175%) !important;
-  -webkit-backdrop-filter: blur(36px) saturate(175%) !important;
-  border-left: 1px solid var(--cadence-border) !important;
-  box-shadow: none !important;
-  color: var(--cadence-text) !important;
-}
-
-.main-shelf-shelf::before,
-.main-shelf-shelf::after,
-[data-testid="carousel-container"]::before,
-[data-testid="carousel-container"]::after,
-.main-yourLibraryX-header::after,
-.main-yourLibraryX-libraryRootlist::before,
-.main-yourLibraryX-libraryRootlist::after,
-.LayoutResizer__resize-bar,
-.LayoutResizer__inline-root {
-  background: transparent !important;
-  background-image: none !important;
-  box-shadow: none !important;
-}
-
-/* ==========================================================================
-   3. ALBUM HEADERS, ALTERNATING TRACK PILLS & SQUIRCLE CARDS
-   ========================================================================== */
-body.cadence-editorial-headers .main-entityHeader-creatorButton,
-body.cadence-editorial-headers .main-entityHeader-metaData a {
-  color: var(--cadence-accent) !important;
-  font-weight: 600 !important;
-  font-size: 18px !important;
-}
-
-body.cadence-editorial-headers .main-entityHeader-imageContainer img {
-  border-radius: var(--cadence-radius) !important;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.32) !important;
-}
-
-.main-actionBar-ActionBarRow button[data-testid="play-button"] {
-  background-color: var(--cadence-accent) !important;
-  color: #ffffff !important;
-  border-radius: 8px !important;
-  height: 36px !important;
-  padding: 0 22px !important;
-  min-width: 108px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 8px !important;
-}
-
-.main-actionBar-ActionBarRow button[data-testid="play-button"]::after {
-  content: "Play";
-  font-size: 13.5px;
-  font-weight: 700;
-  color: #ffffff;
-}
-
-.main-actionBar-ActionBarRow button[data-testid="play-button"] svg {
-  width: 15px !important;
-  height: 15px !important;
-  fill: #ffffff !important;
-  color: #ffffff !important;
-}
-
-.main-actionBar-ActionBarRow button[aria-label*="Shuffle"],
-.main-actionBar-ActionBarRow button[data-testid="control-button-shuffle"] {
-  background-color: var(--cadence-accent) !important;
-  color: #ffffff !important;
-  border-radius: 8px !important;
-  height: 36px !important;
-  padding: 0 20px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 8px !important;
-}
-
-.main-actionBar-ActionBarRow button[aria-label*="Shuffle"]::after {
-  content: "Shuffle";
-  font-size: 13.5px;
-  font-weight: 700;
-  color: #ffffff;
-}
-
-.main-actionBar-ActionBarRow button[aria-label*="Shuffle"] svg {
-  fill: #ffffff !important;
-  color: #ffffff !important;
-}
-
-.main-trackList-trackListRow {
-  border-radius: 8px !important;
-  margin-bottom: 2px !important;
-  border: none !important;
-}
-
-.main-trackList-trackListRow:nth-child(odd) {
-  background-color: var(--cadence-row-alt) !important;
-}
-
-.main-trackList-trackListRow:hover {
-  background-color: var(--cadence-surface-hover) !important;
-}
-
-.main-trackList-active .main-trackList-rowTitle,
-.main-trackList-active .main-trackList-rowMarker {
-  color: var(--cadence-accent) !important;
-  fill: currentColor !important;
-}
-
-.main-card-card,
-.main-cardImage-imageWrapper,
-.main-coverSlotCollapsed-container {
-  border-radius: var(--cadence-radius) !important;
-}
-
-body.cadence-squircle-cards .main-card-card {
-  background-color: var(--cadence-card) !important;
-  border: 1px solid var(--cadence-border) !important;
-  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
-}
-
-body.cadence-squircle-cards .main-card-card:hover {
-  transform: translateY(-3px) !important;
-  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.16) !important;
-}
-
-button.main-playButton-button {
-  background-color: var(--cadence-accent) !important;
-  color: #ffffff !important;
-}
-
-button.main-playButton-button svg {
-  fill: #ffffff !important;
-  color: #ffffff !important;
-}
-
-/* ==========================================================================
-   4. DYNAMIC ALBUM-ART BACKDROP & PROGRESSIVE BLUR KARAOKE LYRICS
-   ========================================================================== */
-#cadence-art-backdrop {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  overflow: hidden;
-}
-
-#cadence-art-backdrop.cadence-hidden {
-  display: none !important;
-}
-
-.cadence-backdrop-orb {
-  position: absolute;
-  width: 55vw;
-  height: 55vw;
-  border-radius: 50%;
-  background-size: cover;
-  background-position: center;
-  filter: blur(85px) saturate(175%);
-  opacity: 0.25;
-  transition: background-image 0.9s ease, opacity 0.5s ease;
-}
-
-body.cadence-light-mode .cadence-backdrop-orb {
-  opacity: 0.11;
-}
-
-.cadence-backdrop-orb.orb-a { top: -15%; left: -8%; }
-.cadence-backdrop-orb.orb-b { bottom: -18%; right: -8%; }
-
-.lyrics-lyrics-background {
-  backdrop-filter: blur(85px) saturate(185%) brightness(0.62) !important;
-}
-
-.lyrics-lyricsContent-lyric {
-  font-weight: 800 !important;
-  letter-spacing: -0.02em !important;
-  line-height: 1.25 !important;
-  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease, filter 0.28s ease, text-shadow 0.25s ease !important;
-  transform-origin: left center !important;
-}
-
-body.cadence-lyric-blur .lyrics-lyricsContent-lyric:not(.lyrics-lyricsContent-active),
-body.cadence-lyric-blur [data-testid="lyrics-line"]:not([data-active="true"]) {
-  filter: blur(1.35px) !important;
-  opacity: 0.44 !important;
-}
-
-body.cadence-lyric-blur .lyrics-lyricsContent-lyric:hover,
-body.cadence-lyric-blur [data-testid="lyrics-line"]:hover {
-  filter: blur(0px) !important;
-  opacity: 0.85 !important;
-}
-
-.lyrics-lyricsContent-lyric.lyrics-lyricsContent-active,
-[data-testid="lyrics-line"][data-active="true"] {
-  filter: blur(0px) !important;
-  opacity: 1 !important;
-  color: #ffffff !important;
-  transform: scale(var(--cadence-lyric-scale)) !important;
-}
-
-body.cadence-lyric-glow .lyrics-lyricsContent-lyric.lyrics-lyricsContent-active,
-body.cadence-lyric-glow [data-testid="lyrics-line"][data-active="true"] {
-  text-shadow: 0 0 24px rgba(255, 255, 255, 0.45) !important;
-}
-
-body.cadence-lyric-theater .Root__nav-bar,
-body.cadence-lyric-theater .Root__right-sidebar {
-  opacity: 0.35;
-  transition: opacity 0.3s ease;
-}
-
-body.cadence-lyric-theater .Root__nav-bar:hover,
-body.cadence-lyric-theater .Root__right-sidebar:hover {
-  opacity: 1;
-}
-
-/* ==========================================================================
-   5. MINIMAL SCROLLBARS & FULL 5-LAYER AD/BANNER SUPPRESSION
-   ========================================================================== */
-body.cadence-compact-ui ::-webkit-scrollbar {
-  width: 5px !important;
-  height: 5px !important;
-}
-
-body.cadence-compact-ui ::-webkit-scrollbar-thumb {
-  background: rgba(140, 140, 145, 0.35) !important;
-  border-radius: 99px !important;
-}
-
-body.cadence-adblock-active .main-leaderboardComponent-container,
-body.cadence-adblock-active .main-billboardComponent-container,
-body.cadence-adblock-active [data-testid="ad-slot-container"],
-body.cadence-adblock-active [data-testid="in-feed-ad"],
-body.cadence-adblock-active [data-testid="billboard-ad"],
-body.cadence-adblock-active [data-testid="hpto-parent"],
-body.cadence-adblock-active [aria-label="Advertisement"],
-body.cadence-adblock-active [aria-label*="Sponsored"],
-body.cadence-adblock-active [aria-label*="Upgrade to Premium"],
-body.cadence-adblock-active button[title*="Upgrade"],
-body.cadence-adblock-active button[title*="Explore Premium"],
-body.cadence-adblock-active a[href*="/premium"],
-body.cadence-adblock-active .main-topBar-UpgradeButton,
-body.cadence-adblock-active .desktoproutes-homepage-takeover-ad-hptoComponent-parentContainer {
-  display: none !important;
-  visibility: hidden !important;
-  height: 0 !important;
-  min-height: 0 !important;
-  overflow: hidden !important;
-  pointer-events: none !important;
-}
-
-/* ==========================================================================
-   6. CADENCE STUDIO MODAL (3 COLOR WHEELS & THEME CONTROLS)
-   ========================================================================== */
-.GenericModal,
-.GenericModal > div,
-.main-embedWidgetGenerator-container {
-  background-color: var(--cadence-elevated) !important;
-  color: var(--cadence-text) !important;
-  border: 1px solid var(--cadence-border) !important;
-  border-radius: 18px !important;
-}
-
-.cadence-studio-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  min-width: 520px;
-  padding: 4px;
-  color: var(--cadence-text) !important;
-}
-
-.cadence-tabs {
-  display: flex;
-  gap: 6px;
-  border-bottom: 1px solid var(--cadence-border);
-  padding-bottom: 10px;
-}
-
-.cadence-tab-btn {
-  background: var(--cadence-tinted);
-  border: 1px solid var(--cadence-border);
-  color: var(--cadence-text) !important;
-  padding: 8px 13px;
-  border-radius: 9px;
-  font-weight: 600;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.cadence-tab-btn:hover {
-  background: var(--cadence-surface-hover);
-}
-
-.cadence-tab-btn.active {
-  background: var(--cadence-accent) !important;
-  border-color: var(--cadence-accent) !important;
-  color: #ffffff !important;
-}
-
-.cadence-panel {
-  display: none;
-  flex-direction: column;
-  gap: 11px;
-}
-
-.cadence-panel.active {
-  display: flex;
-}
-
-.cadence-preset-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-}
-
-.cadence-preset-btn {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--cadence-tinted);
-  border: 1px solid var(--cadence-border);
-  color: var(--cadence-text) !important;
-  padding: 10px 12px;
-  border-radius: 11px;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.cadence-white-theme-btn {
-  background: #ffffff !important;
-  color: #1d1d1f !important;
-  border: 1.5px solid rgba(0, 0, 0, 0.18) !important;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
-}
-
-.cadence-preset-btn:hover {
-  border-color: var(--cadence-accent) !important;
-}
-
-.cadence-swatch {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.cadence-wheels-grid-3 {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-}
-
-.cadence-wheel-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  background: var(--cadence-tinted);
-  border: 1px solid var(--cadence-border);
-  padding: 12px 10px;
-  border-radius: 14px;
-}
-
-.cadence-wheel-title {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--cadence-text) !important;
-}
-
-.cadence-wheel-box {
-  position: relative;
-  border-radius: 50%;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25), inset 0 0 0 1px rgba(128, 128, 128, 0.25);
-  cursor: crosshair;
-}
-
-.cadence-wheel-canvas {
-  display: block;
-  border-radius: 50%;
-}
-
-.cadence-wheel-cursor {
-  position: absolute;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: 2.5px solid #ffffff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-}
-
-.cadence-brightness-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-  font-size: 10px;
-  color: var(--cadence-subtext) !important;
-}
-
-.cadence-brightness-row input[type="range"] {
-  flex: 1;
-  accent-color: var(--cadence-accent);
-  cursor: pointer;
-}
-
-.cadence-hex-badge {
-  font-family: monospace;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 2px 9px;
-  border-radius: 99px;
-  background: var(--cadence-surface-hover);
-  color: var(--cadence-text) !important;
-}
-
-.cadence-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: var(--cadence-tinted);
-  padding: 10px 14px;
-  border-radius: 11px;
-  border: 1px solid var(--cadence-border);
-  font-size: 12.5px;
-  color: var(--cadence-text) !important;
-}
-
-.cadence-row input[type="range"],
-.cadence-row input[type="checkbox"] {
-  accent-color: var(--cadence-accent);
-  cursor: pointer;
-}
-
-.cadence-row input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-}
-
-.cadence-code-box {
-  font-size: 11px;
-  background: var(--cadence-surface-hover);
-  color: var(--cadence-text) !important;
-  padding: 8px 10px;
-  border-radius: 8px;
-  word-break: break-all;
-  user-select: all;
 }
