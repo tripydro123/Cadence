@@ -16,6 +16,12 @@
   --cadence-lyric-scale: 1.18;
 }
 
+/* Switch Windows Native Titlebar Overlay (-, [], X) to Light Mode */
+html:has(body.cadence-light-mode),
+body.cadence-light-mode {
+  color-scheme: light !important;
+}
+
 /* Override Spotify Encore Theme Variables Globally */
 :root,
 body,
@@ -64,7 +70,7 @@ body,
   color: var(--cadence-text) !important;
 }
 
-/* FIX 1: Strip All Top Header, Sticky Filter Bar & Gradient Overlays */
+/* Strip Top Header, Sticky Filter Bar & Gradient Overlays */
 .main-topBar-container,
 .main-topBar-background,
 .main-topBar-overlay,
@@ -93,15 +99,6 @@ body,
   border-bottom: 1px solid var(--cadence-border) !important;
 }
 
-/* FIX 2: Remove Black Box Behind Top-Right Windows Controls (-, [], X) & Fix Top-Left Menu Icon */
-.Root__globalNav > div,
-.Root__globalNav > div:last-child,
-[class*="windowControls"],
-[data-testid="window-controls"] {
-  background: transparent !important;
-  background-color: transparent !important;
-}
-
 .Root__globalNav button svg,
 .main-topBar-container button svg {
   color: var(--cadence-text) !important;
@@ -125,7 +122,7 @@ div[role="list"] button[aria-pressed="true"] {
   border-color: var(--cadence-accent) !important;
 }
 
-/* FIX 3: Remove Dark Fade Gradient Masks on Right/Left Edges of Carousels & Sidebars */
+/* Remove Dark Fade Gradient Masks on Right/Left Edges of Carousels & Sidebars */
 .main-shelf-shelf::before,
 .main-shelf-shelf::after,
 [data-testid="carousel-container"]::before,
@@ -269,7 +266,6 @@ body.cadence-floating-player .Root__now-playing-bar {
   z-index: 90 !important;
 }
 
-/* FIX 4: Make Player Bar Icons (Lyrics, Queue, Devices, Volume, Fullscreen) Crisp on White */
 .Root__now-playing-bar button:not(.main-playPauseButton-button) svg {
   color: var(--cadence-subtext) !important;
   fill: currentColor !important;
