@@ -1,4 +1,4 @@
-// Cadence v3.2 — Spicetify Studio Extension (Zero-Python + Robust DSP Karaoke + AI Ready)
+// Cadence v3.2 — Spicetify Studio Extension (Zero-Python + Robust DSP Karaoke + Player Sync)
 // Author: tripydro123
 
 (function CadenceStudio() {
@@ -84,8 +84,13 @@
   let wiredElement = null;
 
   function initAudioEngine() {
-    const mediaEl = document.querySelector("video, audio");
-    if (!mediaEl || mediaEl === wiredElement) return;
+    const mediaEl = document.querySelector("video, audio") || document.getElementById("audio-player");
+    if (!mediaEl) return;
+
+    if (mediaEl === wiredElement && audioCtx) {
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      return;
+    }
 
     try {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -135,8 +140,9 @@
 
       merger.connect(audioCtx.destination);
       wiredElement = mediaEl;
+      console.log("[Cadence] Audio engine successfully hooked to player element.");
     } catch (err) {
-      console.debug("[Cadence] Audio hook deferred:", err.message);
+      console.debug("[Cadence] Audio hook deferred or already connected:", err.message);
     }
   }
 
@@ -343,7 +349,15 @@
     openCadenceModal
   );
 
+  // Sync audio engine with Spicetify player events
+  if (window.Spicetify?.Player) {
+    Spicetify.Player.addEventListener("songchange", () => {
+      setTimeout(initAudioEngine, 500);
+    });
+  }
+
   applyVisualPrefs();
   createMicHud();
+  setTimeout(initAudioEngine, 1000);
   console.log("[Cadence v3.2] Loaded successfully.");
 })();
