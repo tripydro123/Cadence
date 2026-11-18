@@ -1,4 +1,4 @@
-// Cadence v3.2 — Apple Music UI, White/Dark Adaptive Theme & 3-Wheel Color Studio
+// Cadence v3.5 — Complete Apple Music Desktop Replication, 3-Wheel Studio & 5-Layer AdBlocker
 // Author: tripydro123
 
 (function CadenceStudio() {
@@ -7,40 +7,230 @@
     return;
   }
 
-  const STORAGE_KEY = "cadence_v32_apple_music_ui";
+  const STORAGE_KEY = "cadence_v35_apple_music_full";
   const INSTALL_WIN = "iwr -useb https://raw.githubusercontent.com/tripydro123/cadence/main/install.ps1 | iex";
   const INSTALL_UNIX = "curl -fsSL https://raw.githubusercontent.com/tripydro123/cadence/main/install.sh | sh";
 
   const PRESETS = [
+    { name: "Apple Music Dark", accent: "#fa2d48", surface: "#1f1f21", text: "#ffffff", isWhiteBtn: false },
     { name: "Apple Music White", accent: "#fa2d48", surface: "#ffffff", text: "#1d1d1f", isWhiteBtn: true },
-    { name: "Apple Music Dark", accent: "#fa2d48", surface: "#1c1c1e", text: "#ffffff", isWhiteBtn: false },
-    { name: "iOS Warm White", accent: "#ff2d55", surface: "#f9f9fb", text: "#1d1d1f", isWhiteBtn: true },
-    { name: "OLED Pure Black", accent: "#ff375f", surface: "#000000", text: "#ffffff", isWhiteBtn: false }
+    { name: "OLED Pure Black", accent: "#ff375f", surface: "#000000", text: "#ffffff", isWhiteBtn: false },
+    { name: "iOS Warm White", accent: "#ff2d55", surface: "#f9f9fb", text: "#1d1d1f", isWhiteBtn: true }
   ];
 
   const defaultState = {
     accentHex: "#fa2d48",
-    surfaceHex: "#ffffff",
-    textHex: "#1d1d1f",
+    surfaceHex: "#1f1f21",
+    textHex: "#ffffff",
     autoTextContrast: true,
     borderRadius: 12,
+    topPlayerLayout: true,
+    appleRail68: true,
+    artistSplitLayout: true,
     ambientBackdrop: true,
     floatingPlayer: true,
     squircleHighlight: true,
     editorialHeaders: true,
     compactSidebar: true,
     adBlock: true,
+    lyricBlurInactive: true,
     lyricTheater: false,
     lyricGlow: true,
-    lyricScale: 1.18
+    lyricScale: 1.06
   };
 
   let state = Object.assign({}, defaultState, JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"));
+  let blockedAdCount = 0;
+  let savedVolumeBeforeAd = null;
+  let adHooksInstalled = false;
 
   function saveState() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }
 
+  // ============================================================================
+  // 5-LAYER SPOTIFY ADBLOCK ENGINE
+  // ============================================================================
+  function disableAllAdManagers() {
+    if (!state.adBlock) return;
+    try {
+      const adManagers = Spicetify.Platform?.AdManagers;
+      if (adManagers && typeof adManagers === "object") {
+        Object.keys(adManagers).forEach((key) => {
+          const mgr = adManagers[key];
+          if (mgr && typeof mgr.disable === "function") {
+            mgr.disable().catch(() => {});
+          }
+          if (mgr && typeof mgr === "object" && "isNewAdsNpuEnabled" in mgr) {
+            mgr.isNewAdsNpuEnabled = false;
+          }
+        });
+      }
+    } catch (e) {}
+
+    try {
+      if (Spicetify.CosmosAsync) {
+        const slots = ["audio", "billboard", "leaderboard", "sponsored-playlist", "hpto", "stream", "watchnow"];
+        slots.forEach((slot) => {
+          Spicetify.CosmosAsync.post(`sp://ads/v1/slots/${slot}/disable`).catch(() => {});
+          Spicetify.CosmosAsync.del(`sp://ads/v1/ads/${slot}`).catch(() => {});
+        });
+      }
+    } catch (e) {}
+
+    try {
+      const productState =
+        Spicetify.Platform?.UserAPI?._product_state ||
+        Spicetify.Platform?.ProductStateAPI?.productStateApi;
+      if (productState && typeof productState.putValues === "function") {
+        productState.putValues({
+          pairs: {
+            ads: "0",
+            catalogue: "premium",
+            product: "premium",
+            type: "premium"
+          }
+        }).catch(() => {});
+      }
+    } catch (e) {}
+  }
+
+  function installAdNetworkHooks() {
+    if (adHooksInstalled) return;
+    adHooksInstalled = true;
+
+    const isAdUrl = (url) => {
+      if (typeof url !== "string") return false;
+      const lower = url.toLowerCase();
+      return (
+        lower.startsWith("sp://ads/") ||
+        lower.startsWith("wg://ads/") ||
+        lower.includes("/ads/v1/") ||
+        lower.includes("/ads/v2/") ||
+        lower.includes("/ad-logic/") ||
+        lower.includes("adevent") ||
+        lower.includes("doubleclick.net") ||
+        lower.includes("googlesyndication.com")
+      );
+    };
+
+    if (Spicetify.CosmosAsync) {
+      ["get", "post", "put", "del", "head"].forEach((method) => {
+        if (typeof Spicetify.CosmosAsync[method] === "function") {
+          const orig = Spicetify.CosmosAsync[method].bind(Spicetify.CosmosAsync);
+          Spicetify.CosmosAsync[method] = function (url, ...args) {
+            if (state.adBlock && isAdUrl(url)) {
+              blockedAdCount++;
+              return Promise.resolve({});
+            }
+            return orig(url, ...args);
+          };
+        }
+      });
+    }
+
+    if (typeof window.fetch === "function") {
+      const origFetch = window.fetch.bind(window);
+      window.fetch = function (resource, init) {
+        const reqUrl = typeof resource === "string" ? resource : resource?.url || "";
+        if (state.adBlock && isAdUrl(reqUrl)) {
+          blockedAdCount++;
+          return Promise.resolve(
+            new Response("{}", {
+              status: 200,
+              headers: { "Content-Type": "application/json" }
+            })
+          );
+        }
+        return origFetch(resource, init);
+      };
+    }
+  }
+
+  function guardAgainstAudioAd() {
+    if (!state.adBlock || !Spicetify.Player) return;
+    const item = Spicetify.Player.data?.item;
+    if (!item) return;
+
+    const isAdTrack =
+      item.uri?.startsWith("spotify:ad:") ||
+      item.type === "ad" ||
+      item.provider === "ad" ||
+      item.metadata?.is_advertisement === "true";
+
+    if (isAdTrack) {
+      blockedAdCount++;
+      if (savedVolumeBeforeAd === null && typeof Spicetify.Player.getVolume === "function") {
+        savedVolumeBeforeAd = Spicetify.Player.getVolume();
+      }
+      if (typeof Spicetify.Player.setVolume === "function") {
+        Spicetify.Player.setVolume(0);
+      }
+      const duration = Spicetify.Player.getDuration?.() || 0;
+      if (duration > 0 && typeof Spicetify.Player.seek === "function") {
+        Spicetify.Player.seek(duration);
+      }
+      if (typeof Spicetify.Player.next === "function") {
+        Spicetify.Player.next();
+      }
+      disableAllAdManagers();
+    } else if (savedVolumeBeforeAd !== null) {
+      if (typeof Spicetify.Player.setVolume === "function") {
+        Spicetify.Player.setVolume(savedVolumeBeforeAd);
+      }
+      savedVolumeBeforeAd = null;
+    }
+  }
+
+  // ============================================================================
+  // APPLE MUSIC SHELL INJECTOR (68px RAIL LOGO, GREEN BOOKMARK & QUEUE TABS)
+  // ============================================================================
+  function mountAppleShellElements() {
+    const navBar = document.querySelector(".Root__nav-bar");
+    if (navBar) {
+      if (!document.getElementById("cadence-apple-rail-logo")) {
+        const logoBtn = document.createElement("div");
+        logoBtn.id = "cadence-apple-rail-logo";
+        logoBtn.title = "Cadence Studio (Alt+C)";
+        logoBtn.innerHTML = `<svg width="20" height="24" viewBox="0 0 170 170" fill="currentColor"><path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.13-1.9-14.34-6.08-3.69-3.03-7.61-7.82-11.77-14.37-5.14-8.01-9.36-17.28-12.66-27.82-3.3-10.54-4.95-20.69-4.95-30.45 0-11.29 2.82-20.51 8.46-27.67 5.64-7.16 12.72-10.83 21.24-11.01 4.81 0 10.18 1.38 16.12 4.14 5.93 2.76 9.75 4.18 11.46 4.26 1.34 0 5.56-1.63 12.66-4.88 7.1-3.25 13.11-4.65 18.03-4.21 13.48 1.09 23.62 6.42 30.42 15.99-12.08 7.32-18.02 17.54-17.81 30.65.21 10.21 3.98 18.71 11.31 25.5 5.14 4.82 11.17 7.82 18.09 9-1.45 4.35-3.08 8.53-4.92 12.56zM119.22 31.9c0 7.99-2.92 15.46-8.76 22.39-7.04 8.21-15.56 12.95-24.81 12.2-.15-.97-.23-2-.23-3.09 0-7.66 3.34-15.86 9.33-22.64 2.98-3.42 6.77-6.26 11.37-8.52 4.6-2.25 8.95-3.49 13.06-3.71.03 1.15.04 2.27.04 3.37z"/></svg>`;
+        logoBtn.addEventListener("click", toggleCadenceModal);
+        navBar.prepend(logoBtn);
+      }
+
+      if (!document.getElementById("cadence-rail-bookmark-btn")) {
+        const bookmarkBtn = document.createElement("button");
+        bookmarkBtn.id = "cadence-rail-bookmark-btn";
+        bookmarkBtn.title = "Liked Songs";
+        bookmarkBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M3 2.5A1.5 1.5 0 0 1 4.5 1h7A1.5 1.5 0 0 1 13 2.5v12.085a.5.5 0 0 1-.812.39L8 11.64l-4.188 3.335A.5.5 0 0 1 3 14.585V2.5z"/></svg>`;
+        bookmarkBtn.addEventListener("click", () => {
+          Spicetify.Platform?.History?.push("/collection/tracks");
+        });
+        navBar.appendChild(bookmarkBtn);
+      }
+    }
+
+    const rightSidebar = document.querySelector(".Root__right-sidebar");
+    if (rightSidebar && !document.getElementById("cadence-queue-segmented-tabs")) {
+      const tabBar = document.createElement("div");
+      tabBar.id = "cadence-queue-segmented-tabs";
+      tabBar.innerHTML = `
+        <button class="cadence-seg-tab active" data-qtab="next">Playing next</button>
+        <button class="cadence-seg-tab" data-qtab="history">History</button>
+      `;
+      tabBar.querySelectorAll(".cadence-seg-tab").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          tabBar.querySelectorAll(".cadence-seg-tab").forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          Spicetify.Platform?.History?.push("/queue");
+        });
+      });
+      rightSidebar.prepend(tabBar);
+    }
+  }
+
+  // ============================================================================
+  // COLOR & UI HELPERS
+  // ============================================================================
   function hexToHsv(hex) {
     const clean = hex.replace("#", "");
     const r = parseInt(clean.substring(0, 2), 16) / 255;
@@ -104,14 +294,11 @@
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
 
-  // Safe one-pass header gradient cleaner (no MutationObserver loop)
   function stripInlineHeaderShades() {
     const targets = document.querySelectorAll(
       ".main-home-homeHeader, .main-home-filterChipsSection, .main-topBar-overlay, .main-entityHeader-backgroundColor, .under-main-view"
     );
     targets.forEach((el) => {
-      if (el.dataset.cadenceCleaned === "1") return;
-      el.dataset.cadenceCleaned = "1";
       el.style.setProperty("background", "transparent", "important");
       el.style.setProperty("background-color", "transparent", "important");
       el.style.setProperty("background-image", "none", "important");
@@ -190,28 +377,31 @@
     const root = document.documentElement;
     const isLight = getLuminance(state.surfaceHex) > 0.58;
 
-    // Switches Windows top-right caption buttons (-, [], X) between Light and Dark mode
     root.style.colorScheme = isLight ? "light" : "dark";
 
     if (state.autoTextContrast) {
       state.textHex = isLight ? "#1d1d1f" : "#ffffff";
     }
 
-    const sidebarBg = isLight ? shiftHex(state.surfaceHex, -10) : shiftHex(state.surfaceHex, 6);
-    const elevatedBg = isLight ? "#ffffff" : shiftHex(state.surfaceHex, 14);
-    const cardBg = isLight ? shiftHex(state.surfaceHex, -6) : shiftHex(state.surfaceHex, 10);
+    const sidebarBg = isLight ? shiftHex(state.surfaceHex, -10) : shiftHex(state.surfaceHex, 7);
+    const elevatedBg = isLight ? "#ffffff" : shiftHex(state.surfaceHex, 13);
+    const cardBg = isLight ? shiftHex(state.surfaceHex, -6) : shiftHex(state.surfaceHex, 9);
+    const lcdBg = isLight ? "rgba(0, 0, 0, 0.045)" : "rgba(255, 255, 255, 0.08)";
+    const rowAlt = isLight ? "rgba(0, 0, 0, 0.025)" : "rgba(255, 255, 255, 0.035)";
     const hoverBg = isLight ? "rgba(0, 0, 0, 0.05)" : "rgba(255, 255, 255, 0.08)";
     const pressBg = isLight ? "rgba(0, 0, 0, 0.09)" : "rgba(255, 255, 255, 0.13)";
-    const tintedBg = isLight ? "rgba(0, 0, 0, 0.05)" : "rgba(255, 255, 255, 0.06)";
+    const tintedBg = isLight ? "rgba(0, 0, 0, 0.05)" : "rgba(255, 255, 255, 0.07)";
     const borderCol = isLight ? "rgba(0, 0, 0, 0.08)" : "rgba(255, 255, 255, 0.1)";
-    const subtextCol = hexToRgba(state.textHex, 0.65);
+    const subtextCol = isLight ? "rgba(29, 29, 31, 0.6)" : "#a1a1a6";
 
     root.style.setProperty("--cadence-accent", state.accentHex);
-    root.style.setProperty("--cadence-accent-soft", hexToRgba(state.accentHex, isLight ? 0.12 : 0.2));
+    root.style.setProperty("--cadence-accent-soft", hexToRgba(state.accentHex, isLight ? 0.12 : 0.18));
     root.style.setProperty("--cadence-surface", state.surfaceHex);
     root.style.setProperty("--cadence-sidebar", sidebarBg);
     root.style.setProperty("--cadence-elevated", elevatedBg);
     root.style.setProperty("--cadence-card", cardBg);
+    root.style.setProperty("--cadence-lcd-bg", lcdBg);
+    root.style.setProperty("--cadence-row-alt", rowAlt);
     root.style.setProperty("--cadence-surface-hover", hoverBg);
     root.style.setProperty("--cadence-surface-press", pressBg);
     root.style.setProperty("--cadence-tinted", tintedBg);
@@ -234,14 +424,24 @@
     root.style.setProperty("--spice-subtext", subtextCol);
 
     document.body.classList.toggle("cadence-light-mode", isLight);
+    document.body.classList.toggle("cadence-top-player", !!state.topPlayerLayout);
+    document.body.classList.toggle("cadence-apple-rail", !!state.appleRail68);
+    document.body.classList.toggle("cadence-artist-split", !!state.artistSplitLayout);
     document.body.classList.toggle("cadence-adblock-active", !!state.adBlock);
     document.body.classList.toggle("cadence-floating-player", !!state.floatingPlayer);
     document.body.classList.toggle("cadence-squircle-cards", !!state.squircleHighlight);
     document.body.classList.toggle("cadence-editorial-headers", !!state.editorialHeaders);
     document.body.classList.toggle("cadence-compact-ui", !!state.compactSidebar);
+    document.body.classList.toggle("cadence-lyric-blur", !!state.lyricBlurInactive);
     document.body.classList.toggle("cadence-lyric-theater", !!state.lyricTheater);
     document.body.classList.toggle("cadence-lyric-glow", !!state.lyricGlow);
 
+    if (state.adBlock) {
+      installAdNetworkHooks();
+      disableAllAdManagers();
+    }
+
+    mountAppleShellElements();
     stripInlineHeaderShades();
     updateBackdropArt();
   }
@@ -370,7 +570,7 @@
     container.innerHTML = `
       <div class="cadence-tabs">
         <button class="cadence-tab-btn active" data-tab="appearance">Themes & Color Wheels</button>
-        <button class="cadence-tab-btn" data-tab="layout">Apple Music UI</button>
+        <button class="cadence-tab-btn" data-tab="layout">Apple Music & AdBlock</button>
         <button class="cadence-tab-btn" data-tab="lyrics">Karaoke Lyrics</button>
         <button class="cadence-tab-btn" data-tab="share">Share Theme</button>
       </div>
@@ -380,7 +580,7 @@
           ${PRESETS.map(
             (p, idx) => `
             <button class="cadence-preset-btn ${p.isWhiteBtn ? "cadence-white-theme-btn" : ""}" data-preset="${idx}">
-              <span class="cadence-swatch" style="background:${p.surface};border:2px solid${p.accent};"></span>
+              <span class="cadence-swatch" style="background:${p.surface};border:2px solid ${p.accent};"></span>
               <span>${p.name}</span>
             </button>`
           ).join("")}
@@ -409,38 +609,45 @@
 
       <div class="cadence-panel" data-panel="layout">
         <div class="cadence-row">
-          <span>Apple Music Frosted-Glass Floating Player Pill</span>
-          <input type="checkbox" id="cadence-floating-toggle" ${state.floatingPlayer ? "checked" : ""} />
+          <div>
+            <div style="font-weight:700;">5-Layer Full AdBlocker (Audio, Video, Banners & Upsells)</div>
+            <div style="font-size:11px;opacity:0.75;">Status: ${state.adBlock ? `Active (${blockedAdCount} ad calls blocked this session)` : "Disabled"}</div>
+          </div>
+          <input type="checkbox" id="cadence-adblock-toggle" ${state.adBlock ? "checked" : ""} />
         </div>
         <div class="cadence-row">
-          <span>Dynamic Album-Art Ambient Mesh Backdrop</span>
+          <span>56px Top LCD Transport Bar (440×42px Capsule)</span>
+          <input type="checkbox" id="cadence-topplayer-toggle" ${state.topPlayerLayout ? "checked" : ""} />
+        </div>
+        <div class="cadence-row">
+          <span>68px Apple Icon Left Rail & Green Bookmark Badge</span>
+          <input type="checkbox" id="cadence-applerail-toggle" ${state.appleRail68 ? "checked" : ""} />
+        </div>
+        <div class="cadence-row">
+          <span>460px Artist Hero & Two-Column Latest Release + Top Songs</span>
+          <input type="checkbox" id="cadence-artistsplit-toggle" ${state.artistSplitLayout ? "checked" : ""} />
+        </div>
+        <div class="cadence-row">
+          <span>Dynamic Album-Art Ambient Glow Through Sidebars</span>
           <input type="checkbox" id="cadence-backdrop-toggle" ${state.ambientBackdrop ? "checked" : ""} />
         </div>
         <div class="cadence-row">
-          <span>Apple Music Squircle Cards & Glass Edge Highlight</span>
-          <input type="checkbox" id="cadence-squircle-toggle" ${state.squircleHighlight ? "checked" : ""} />
-        </div>
-        <div class="cadence-row">
-          <span>Clean Editorial Playlist & Album Headers</span>
-          <input type="checkbox" id="cadence-editorial-toggle" ${state.editorialHeaders ? "checked" : ""} />
-        </div>
-        <div class="cadence-row">
           <span>Card Corner Radius (<span id="cadence-radius-val">${state.borderRadius}</span>px)</span>
-          <input type="range" id="cadence-radius-slider" min="6" max="22" step="2" value="${state.borderRadius}" />
-        </div>
-        <div class="cadence-row">
-          <span>Suppress Upgrade & Promo Banners</span>
-          <input type="checkbox" id="cadence-adblock-toggle" ${state.adBlock ? "checked" : ""} />
+          <input type="range" id="cadence-radius-slider" min="6" max="20" step="2" value="${state.borderRadius}" />
         </div>
       </div>
 
       <div class="cadence-panel" data-panel="lyrics">
         <div class="cadence-row">
-          <span>Active Lyric Zoom Scale (<span id="cadence-scale-val">${state.lyricScale.toFixed(2)}</span>x)</span>
-          <input type="range" id="cadence-scale-slider" min="1.0" max="1.4" step="0.05" value="${state.lyricScale}" />
+          <span>Apple Music Progressive Blur on Inactive Lyric Lines</span>
+          <input type="checkbox" id="cadence-lyric-blur-toggle" ${state.lyricBlurInactive ? "checked" : ""} />
         </div>
         <div class="cadence-row">
-          <span>Accent Glow on Active Lyric Line</span>
+          <span>Active Lyric Zoom Scale (<span id="cadence-scale-val">${state.lyricScale.toFixed(2)}</span>x)</span>
+          <input type="range" id="cadence-scale-slider" min="1.0" max="1.35" step="0.02" value="${state.lyricScale}" />
+        </div>
+        <div class="cadence-row">
+          <span>Soft White Glow on Active Lyric Line</span>
           <input type="checkbox" id="cadence-lyric-glow-toggle" ${state.lyricGlow ? "checked" : ""} />
         </div>
         <div class="cadence-row">
@@ -536,14 +743,26 @@
       saveState();
     });
 
-    container.querySelector("#cadence-adblock-toggle").addEventListener("change", (e) => {
-      state.adBlock = e.target.checked;
+    container.querySelector("#cadence-topplayer-toggle").addEventListener("change", (e) => {
+      state.topPlayerLayout = e.target.checked;
       applyVisualPrefs();
       saveState();
     });
 
-    container.querySelector("#cadence-floating-toggle").addEventListener("change", (e) => {
-      state.floatingPlayer = e.target.checked;
+    container.querySelector("#cadence-applerail-toggle").addEventListener("change", (e) => {
+      state.appleRail68 = e.target.checked;
+      applyVisualPrefs();
+      saveState();
+    });
+
+    container.querySelector("#cadence-artistsplit-toggle").addEventListener("change", (e) => {
+      state.artistSplitLayout = e.target.checked;
+      applyVisualPrefs();
+      saveState();
+    });
+
+    container.querySelector("#cadence-adblock-toggle").addEventListener("change", (e) => {
+      state.adBlock = e.target.checked;
       applyVisualPrefs();
       saveState();
     });
@@ -554,21 +773,15 @@
       saveState();
     });
 
-    container.querySelector("#cadence-squircle-toggle").addEventListener("change", (e) => {
-      state.squircleHighlight = e.target.checked;
-      applyVisualPrefs();
-      saveState();
-    });
-
-    container.querySelector("#cadence-editorial-toggle").addEventListener("change", (e) => {
-      state.editorialHeaders = e.target.checked;
-      applyVisualPrefs();
-      saveState();
-    });
-
     container.querySelector("#cadence-radius-slider").addEventListener("input", (e) => {
       state.borderRadius = Number(e.target.value);
       container.querySelector("#cadence-radius-val").textContent = state.borderRadius;
+      applyVisualPrefs();
+      saveState();
+    });
+
+    container.querySelector("#cadence-lyric-blur-toggle").addEventListener("change", (e) => {
+      state.lyricBlurInactive = e.target.checked;
       applyVisualPrefs();
       saveState();
     });
@@ -599,7 +812,7 @@
     copyUnixBtn.addEventListener("click", () => copyToClipboard(INSTALL_UNIX, copyUnixBtn, "Copy"));
 
     Spicetify.PopupModal.display({
-      title: "Cadence v3.2 — Apple Music Studio",
+      title: "Cadence v3.5 — Apple Music Studio",
       content: container,
       isLarge: true
     });
@@ -614,13 +827,18 @@
 
   if (window.Spicetify?.Player) {
     Spicetify.Player.addEventListener("songchange", () => {
+      guardAgainstAudioAd();
       setTimeout(updateBackdropArt, 250);
     });
   }
 
   if (window.Spicetify?.Platform?.History) {
     Spicetify.Platform.History.listen(() => {
-      setTimeout(stripInlineHeaderShades, 250);
+      disableAllAdManagers();
+      setTimeout(() => {
+        mountAppleShellElements();
+        stripInlineHeaderShades();
+      }, 250);
     });
   }
 
@@ -631,6 +849,11 @@
   );
 
   applyVisualPrefs();
-  setTimeout(stripInlineHeaderShades, 800);
-  console.log("[Cadence v3.2] Clean Apple Music UI loaded.");
+  setTimeout(disableAllAdManagers, 1500);
+  setInterval(disableAllAdManagers, 15000);
+  setTimeout(() => {
+    mountAppleShellElements();
+    stripInlineHeaderShades();
+  }, 600);
+  console.log("[Cadence v3.5] Full Apple Music UI & 5-Layer AdBlocker active.");
 })();
