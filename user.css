@@ -1,4 +1,4 @@
-/* Cadence v3.2 — Clean Apple Music White & Dark Adaptive UI */
+/* Cadence v3.2 — Lightweight Apple Music White & Dark Adaptive UI */
 :root {
   --cadence-accent: #fa2d48;
   --cadence-accent-soft: rgba(250, 45, 72, 0.12);
@@ -14,12 +14,6 @@
   --cadence-subtext: rgba(29, 29, 31, 0.65);
   --cadence-radius: 12px;
   --cadence-lyric-scale: 1.18;
-}
-
-/* Switch Windows Native Titlebar Overlay (-, [], X) to Light Mode */
-html:has(body.cadence-light-mode),
-body.cadence-light-mode {
-  color-scheme: light !important;
 }
 
 /* Override Spotify Encore Theme Variables Globally */
@@ -64,13 +58,12 @@ body,
 .Root__main-view,
 .main-view-container,
 .main-view-container__scroll-node,
-.os-content,
-[data-testid="home-page"] {
+.os-content {
   background-color: var(--cadence-surface) !important;
   color: var(--cadence-text) !important;
 }
 
-/* Strip Top Header, Sticky Filter Bar & Gradient Overlays */
+/* Strip Top Header, Filter Bar & Gradient Overlays */
 .main-topBar-container,
 .main-topBar-background,
 .main-topBar-overlay,
@@ -80,10 +73,7 @@ body,
 .under-main-view,
 .main-entityHeader-backgroundColor,
 .main-entityHeader-overlay,
-.main-actionBarBackground-background,
-[data-testid="home-page"] > div > div:first-child,
-.Root__main-view [style*="linear-gradient"],
-.Root__main-view [style*="home-header-color"] {
+.main-actionBarBackground-background {
   background: transparent !important;
   background-color: transparent !important;
   background-image: none !important;
@@ -93,9 +83,9 @@ body,
 /* Frosted Top Navigation Bar */
 .Root__globalNav,
 .main-topBar-container {
-  background: color-mix(in srgb, var(--cadence-surface) 88%, transparent) !important;
-  backdrop-filter: blur(28px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  background: color-mix(in srgb, var(--cadence-surface) 90%, transparent) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
   border-bottom: 1px solid var(--cadence-border) !important;
 }
 
@@ -122,13 +112,11 @@ div[role="list"] button[aria-pressed="true"] {
   border-color: var(--cadence-accent) !important;
 }
 
-/* Remove Dark Fade Gradient Masks on Right/Left Edges of Carousels & Sidebars */
+/* Remove Dark Fade Masks on Shelf & Sidebar Edges */
 .main-shelf-shelf::before,
 .main-shelf-shelf::after,
 [data-testid="carousel-container"]::before,
 [data-testid="carousel-container"]::after,
-[data-testid="carousel-container"] > div[style*="gradient"],
-section > div > div[style*="gradient"],
 .main-yourLibraryX-header::after,
 .main-yourLibraryX-libraryRootlist::before,
 .main-yourLibraryX-libraryRootlist::after,
@@ -202,7 +190,7 @@ h1, h2, h3, h4,
   color: var(--cadence-subtext) !important;
 }
 
-/* Dynamic Album-Art Mesh Backdrop */
+/* Lightweight Static Album-Art Ambient Backdrop (Zero GPU Animation Lag) */
 #cadence-art-backdrop {
   position: fixed;
   inset: 0;
@@ -217,28 +205,22 @@ h1, h2, h3, h4,
 
 .cadence-backdrop-orb {
   position: absolute;
-  width: 60vw;
-  height: 60vw;
+  width: 48vw;
+  height: 48vw;
   border-radius: 50%;
   background-size: cover;
   background-position: center;
-  filter: blur(95px) saturate(165%);
-  opacity: 0.2;
-  transition: background-image 1.1s ease, opacity 0.6s ease;
-  animation: cadenceFloat 24s ease-in-out infinite alternate;
+  filter: blur(70px) saturate(150%);
+  opacity: 0.16;
+  transition: background-image 0.9s ease, opacity 0.5s ease;
 }
 
 body.cadence-light-mode .cadence-backdrop-orb {
   opacity: 0.08;
 }
 
-.cadence-backdrop-orb.orb-a { top: -18%; left: -8%; }
-.cadence-backdrop-orb.orb-b { bottom: -20%; right: -10%; animation-delay: -12s; }
-
-@keyframes cadenceFloat {
-  0% { transform: translate(0, 0) scale(1); }
-  100% { transform: translate(4%, 5%) scale(1.1); }
-}
+.cadence-backdrop-orb.orb-a { top: -15%; left: -6%; }
+.cadence-backdrop-orb.orb-b { bottom: -18%; right: -8%; }
 
 /* Search Pill */
 .x-searchInput-searchInputInput,
@@ -257,11 +239,11 @@ body.cadence-floating-player .Root__now-playing-bar {
   transform: translateX(-50%) !important;
   width: min(94vw, 1180px) !important;
   border-radius: 20px !important;
-  background: color-mix(in srgb, var(--cadence-elevated) 88%, transparent) !important;
-  backdrop-filter: blur(32px) saturate(190%) !important;
-  -webkit-backdrop-filter: blur(32px) saturate(190%) !important;
+  background: color-mix(in srgb, var(--cadence-elevated) 90%, transparent) !important;
+  backdrop-filter: blur(22px) !important;
+  -webkit-backdrop-filter: blur(22px) !important;
   border: 1px solid var(--cadence-border) !important;
-  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.14) !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14) !important;
   padding: 6px 16px !important;
   z-index: 90 !important;
 }
@@ -292,7 +274,7 @@ body.cadence-editorial-headers .main-entityHeader-title h1 {
 
 body.cadence-editorial-headers .main-entityHeader-imageContainer img {
   border-radius: var(--cadence-radius) !important;
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.2) !important;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.18) !important;
 }
 
 /* Apple Music Squircle Cards & Track Rows */
@@ -306,12 +288,12 @@ body.cadence-editorial-headers .main-entityHeader-imageContainer img {
 body.cadence-squircle-cards .main-card-card {
   background-color: var(--cadence-card) !important;
   border: 1px solid var(--cadence-border) !important;
-  transition: transform 0.22s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.22s ease !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
 }
 
 body.cadence-squircle-cards .main-card-card:hover {
-  transform: translateY(-3px) scale(1.01) !important;
-  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.12) !important;
+  transform: translateY(-3px) !important;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12) !important;
 }
 
 .main-trackList-trackListRow:hover {
@@ -352,7 +334,7 @@ body.cadence-adblock-active button[title="Upgrade to Premium"] {
 
 /* Karaoke Lyrics Enhancements */
 .lyrics-lyricsContent-lyric {
-  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), color 0.2s ease, text-shadow 0.25s ease !important;
+  transition: transform 0.25s ease, color 0.2s ease, text-shadow 0.25s ease !important;
   transform-origin: left center !important;
 }
 
@@ -413,7 +395,6 @@ body.cadence-lyric-theater .Root__right-sidebar:hover {
   font-weight: 600;
   font-size: 12px;
   cursor: pointer;
-  transition: background 0.15s ease;
 }
 
 .cadence-tab-btn:hover {
@@ -454,7 +435,6 @@ body.cadence-lyric-theater .Root__right-sidebar:hover {
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
-  transition: border-color 0.15s ease, transform 0.15s ease;
 }
 
 .cadence-white-theme-btn {
@@ -466,7 +446,6 @@ body.cadence-lyric-theater .Root__right-sidebar:hover {
 
 .cadence-preset-btn:hover {
   border-color: var(--cadence-accent) !important;
-  transform: translateY(-1px);
 }
 
 .cadence-swatch {
